@@ -4,13 +4,16 @@
    ========================================= */
 class AudioEngine {
     constructor() {
-        this.context = null;
-        this.analyser = null;
+        this.context = new (window.AudioContext || window.webkitAudioContext)();
+        this.analyser = this.context.createAnalyser();
+        this.analyser.fftSize = 2048;
+        // Smoothing constant: 0.85 is standard, 0.9 is very smooth
+        this.analyser.smoothingTimeConstant = 0.85; 
+        this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
+        this.recordingDest = this.context.createMediaStreamDestination();
+        
         this.source = null;
         this.audioElement = null;
-        this.recordingDest = null;
-        this.frequencyData = null;
-        this.fftSize = 2048;
         
         // Event hooks
         this.onTimeUpdate = null;
@@ -19,20 +22,11 @@ class AudioEngine {
         this.onLoaded = null;
     }
 
-    init() {
-        if (this.context) return;
-        this.context = new (window.AudioContext || window.webkitAudioContext)();
-        this.analyser = this.context.createAnalyser();
-        this.analyser.fftSize = this.fftSize;
-        // Smoothing constant: 0.85 is standard, 0.9 is very smooth
-        this.analyser.smoothingTimeConstant = 0.85; 
-        this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
-        this.recordingDest = this.context.createMediaStreamDestination();
-    }
+    // Removed init() as it is now in constructor. 
+    // Kept for compatibility if called, but does nothing.
+    init() {}
 
     load(blobUrl) {
-        this.init();
-        
         // Cleanup old element
         if (this.audioElement) {
             this.audioElement.pause();
@@ -43,7 +37,7 @@ class AudioEngine {
         this.audioElement = new Audio(blobUrl);
         this.audioElement.crossOrigin = "anonymous";
         
-        // Disconnect old source
+        // Disconnect old source if it exists
         if (this.source) {
             try { this.source.disconnect(); } catch(e) {}
         }
@@ -58,7 +52,7 @@ class AudioEngine {
 
         this.audioElement.addEventListener('canplaythrough', () => {
             if (this.onLoaded) this.onLoaded();
-        }, { once: true }); // Only fire once per load
+        }, { once: true });
 
         this.audioElement.addEventListener('timeupdate', () => { if(this.onTimeUpdate) this.onTimeUpdate(); });
         this.audioElement.addEventListener('ended', () => { if(this.onEnded) this.onEnded(); });
@@ -71,7 +65,7 @@ class AudioEngine {
     play() {
         if (!this.audioElement) return;
         
-        // Always try to resume context
+        // Always try to resume context (browser autoplay policy)
         if (this.context.state === 'suspended') {
             this.context.resume();
         }
@@ -99,11 +93,8 @@ class AudioEngine {
     }
 
     setFFTSize(size) {
-        this.fftSize = size;
-        if (this.analyser) {
-            this.analyser.fftSize = size;
-            this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
-        }
+        this.analyser.fftSize = size;
+        this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
     }
 
     getFrequencyData() {
