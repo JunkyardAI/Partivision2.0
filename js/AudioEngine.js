@@ -42,15 +42,13 @@ class AudioEngine {
         if (this.source) this.source.disconnect();
         this.source = this.context.createMediaElementSource(this.audioElement);
         
-        // Routing: Source -> Analyser -> Speakers
-        //                -> Recording Destination
+        // Routing: Source -> Analyser -> Speakers -> Recording Destination
         this.source.connect(this.analyser);
         this.analyser.connect(this.context.destination);
         this.source.connect(this.recordingDest);
 
         this.audioElement.addEventListener('loadedmetadata', () => {
             if (this.onLoaded) this.onLoaded();
-            this.play();
         });
         this.audioElement.addEventListener('timeupdate', () => { if(this.onTimeUpdate) this.onTimeUpdate(); });
         this.audioElement.addEventListener('ended', () => { if(this.onEnded) this.onEnded(); });
