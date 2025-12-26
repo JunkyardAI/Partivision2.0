@@ -188,93 +188,95 @@ class VisualizerEngine {
         // Update Bloom
         if (this.bloomPass) this.bloomPass.strength = params.bloom;
 
-        // Update Geometry
-        if (!freqData) return;
-        const len = freqData.length;
-        const sensitivity = 2.0;
+        // --- VISUALIZATION UPDATE (Only runs if audio data exists) ---
+        if (freqData) {
+            const len = freqData.length;
+            const sensitivity = 2.0;
 
-        const updateGeo = (obj, fn) => {
-            const pos = obj.geometry.attributes.position;
-            const orig = obj.geometry.userData.orig.array;
-            const arr = pos.array;
-            fn(arr, orig, freqData, sensitivity, len);
-            pos.needsUpdate = true;
-            obj.geometry.computeVertexNormals();
-        };
+            const updateGeo = (obj, fn) => {
+                const pos = obj.geometry.attributes.position;
+                const orig = obj.geometry.userData.orig.array;
+                const arr = pos.array;
+                fn(arr, orig, freqData, sensitivity, len);
+                pos.needsUpdate = true;
+                obj.geometry.computeVertexNormals();
+            };
 
-        switch (this.currentViz) {
-            case 'particles': {
-                const p = this.visualizations.particles;
-                const c = p.geometry.attributes.color.array;
-                const pa = p.geometry.attributes.position.array;
-                for(let i=0; i<pa.length/3; i++) {
-                    const idx = Math.floor(i/(pa.length/3)*len*0.5);
-                    const val = freqData[idx]/255;
-                    const col = new THREE.Color().setHSL(idx/(len*0.5), 1, 0.5);
-                    c[i*3] = col.r * val * params.color;
-                    c[i*3+1] = col.g * val * params.color;
-                    c[i*3+2] = col.b * val * params.color;
-                }
-                p.geometry.attributes.color.needsUpdate = true;
-                p.rotation.y += 0.0005;
-                p.material.size = params.size;
-                break;
-            }
-            case 'sphere':
-                updateGeo(this.visualizations.sphere, (arr, orig, f, s, l) => {
-                    for(let i=0; i<arr.length/3; i++) {
-                        const val = f[i%l]/255 * s * 5;
-                        const v = new THREE.Vector3(orig[i*3], orig[i*3+1], orig[i*3+2]).normalize().multiplyScalar(15 + val);
-                        arr[i*3] = v.x; arr[i*3+1] = v.y; arr[i*3+2] = v.z;
+            switch (this.currentViz) {
+                case 'particles': {
+                    const p = this.visualizations.particles;
+                    const c = p.geometry.attributes.color.array;
+                    const pa = p.geometry.attributes.position.array;
+                    for(let i=0; i<pa.length/3; i++) {
+                        const idx = Math.floor(i/(pa.length/3)*len*0.5);
+                        const val = freqData[idx]/255;
+                        const col = new THREE.Color().setHSL(idx/(len*0.5), 1, 0.5);
+                        c[i*3] = col.r * val * params.color;
+                        c[i*3+1] = col.g * val * params.color;
+                        c[i*3+2] = col.b * val * params.color;
                     }
-                });
-                this.visualizations.sphere.rotation.y += 0.002;
-                break;
-            case 'terrain':
-                updateGeo(this.visualizations.terrain, (arr, orig, f, s, l) => {
-                        for(let i=0; i<128; i++) {
-                            const val = f[i]/255 * s * 15;
-                            for(let j=0; j<128; j++) {
-                                const idx = (i*128 + j)*3 + 1; // y
-                                arr[idx] = orig[idx] + val;
+                    p.geometry.attributes.color.needsUpdate = true;
+                    p.rotation.y += 0.0005;
+                    p.material.size = params.size;
+                    break;
+                }
+                case 'sphere':
+                    updateGeo(this.visualizations.sphere, (arr, orig, f, s, l) => {
+                        for(let i=0; i<arr.length/3; i++) {
+                            const val = f[i%l]/255 * s * 5;
+                            const v = new THREE.Vector3(orig[i*3], orig[i*3+1], orig[i*3+2]).normalize().multiplyScalar(15 + val);
+                            arr[i*3] = v.x; arr[i*3+1] = v.y; arr[i*3+2] = v.z;
+                        }
+                    });
+                    this.visualizations.sphere.rotation.y += 0.002;
+                    break;
+                case 'terrain':
+                    updateGeo(this.visualizations.terrain, (arr, orig, f, s, l) => {
+                            for(let i=0; i<128; i++) {
+                                const val = f[i]/255 * s * 15;
+                                for(let j=0; j<128; j++) {
+                                    const idx = (i*128 + j)*3 + 1; // y
+                                    arr[idx] = orig[idx] + val;
+                                }
+                            }
+                    });
+                    break;
+                case 'galaxy':
+                    const g = this.visualizations.galaxy;
+                    const col = g.geometry.attributes.color.array;
+                    for(let i=0; i<col.length/3; i++){
+                        const idx = Math.floor(i/(col.length/3)*len*0.2);
+                        const val = freqData[idx]/255;
+                        const c = new THREE.Color().setHSL(0.6 + 0.4*val, 1, 0.5 + 0.5*val);
+                        col[i*3] = c.r * params.color; col[i*3+1] = c.g * params.color; col[i*3+2] = c.b * params.color;
+                    }
+                    g.geometry.attributes.color.needsUpdate = true;
+                    g.rotation.y += 0.001;
+                    break;
+                    case 'parametricEq':
+                    updateGeo(this.visualizations.parametricEq, (arr, orig, f, s, l) => {
+                        for(let i=0; i<=127; i++) {
+                            const idx = Math.floor(i/127 * (l*0.4));
+                            const val = f[idx]/255 * s * 20;
+                            for(let j=0; j<=63; j++) {
+                                const n = (j*128 + i)*3 + 1;
+                                arr[n] = orig[n] + val;
                             }
                         }
-                });
-                break;
-            case 'galaxy':
-                const g = this.visualizations.galaxy;
-                const col = g.geometry.attributes.color.array;
-                for(let i=0; i<col.length/3; i++){
-                    const idx = Math.floor(i/(col.length/3)*len*0.2);
-                    const val = freqData[idx]/255;
-                    const c = new THREE.Color().setHSL(0.6 + 0.4*val, 1, 0.5 + 0.5*val);
-                    col[i*3] = c.r * params.color; col[i*3+1] = c.g * params.color; col[i*3+2] = c.b * params.color;
-                }
-                g.geometry.attributes.color.needsUpdate = true;
-                g.rotation.y += 0.001;
-                break;
-                case 'parametricEq':
-                updateGeo(this.visualizations.parametricEq, (arr, orig, f, s, l) => {
-                    for(let i=0; i<=127; i++) {
-                        const idx = Math.floor(i/127 * (l*0.4));
-                        const val = f[idx]/255 * s * 20;
-                        for(let j=0; j<=63; j++) {
-                            const n = (j*128 + i)*3 + 1;
-                            arr[n] = orig[n] + val;
-                        }
-                    }
-                });
-                break;
-                case 'crystalline':
-                this.visualizations.crystalline.children.forEach((c, i) => {
-                    const val = freqData[i%len]/255 * sensitivity;
-                    c.scale.setScalar(1 + 3*val);
-                    c.material.emissiveIntensity = 2*val;
-                });
-                this.visualizations.crystalline.rotation.y += 0.002;
-                break;
+                    });
+                    break;
+                    case 'crystalline':
+                    this.visualizations.crystalline.children.forEach((c, i) => {
+                        const val = freqData[i%len]/255 * sensitivity;
+                        c.scale.setScalar(1 + 3*val);
+                        c.material.emissiveIntensity = 2*val;
+                    });
+                    this.visualizations.crystalline.rotation.y += 0.002;
+                    break;
+            }
         }
         
+        // --- ALWAYS RENDER (Even if paused) ---
         this.composer.render();
     }
 
