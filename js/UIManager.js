@@ -1,6 +1,6 @@
 /* =========================================
    MODULE: UI MANAGER
-   Handles DOM Interactions and Draggables
+   Handles DOM Interactions, Hotkeys, and Draggables
    ========================================= */
 class UIManager {
     constructor(app) {
@@ -12,6 +12,9 @@ class UIManager {
             record: document.getElementById('recordBtn'),
             snap: document.getElementById('snapshotBtn'),
             hideUi: document.getElementById('hideUiBtn'),
+            help: document.getElementById('helpBtn'), // New Help Button
+            helpOverlay: document.getElementById('help-overlay'), // New Help Overlay
+            closeHelp: document.getElementById('closeHelpBtn'), // New Close Help
             canvasSize: document.getElementById('canvasSize'),
             visualMode: document.getElementById('visualMode'),
             fftSize: document.getElementById('fftSize'),
@@ -20,10 +23,13 @@ class UIManager {
             bar: document.getElementById('progressBar'),
             loading: document.getElementById('loading-overlay'),
             drop: document.getElementById('drop-overlay'),
-            panels: document.querySelectorAll('.settings-panel')
+            panels: document.querySelectorAll('.settings-panel'),
+            playbackControls: document.getElementById('playback-controls'), // Needed for visibility toggling
+            clearFileBtn: document.getElementById('clearFileBtn')
         };
 
         this.bindEvents();
+        this.setupHotkeys();
         this.setupDraggables();
     }
 
@@ -41,14 +47,20 @@ class UIManager {
         this.dom.record.addEventListener('click', () => {
             this.app.toggleRecord();
             this.dom.record.classList.toggle('recording', this.app.recorder.isRecording);
-            this.dom.record.title = this.app.recorder.isRecording ? "Stop Recording" : "Start High Quality Recording";
+            this.dom.record.title = this.app.recorder.isRecording ? "Stop Recording (R)" : "Start High Quality Recording (R)";
         });
         this.dom.snap.addEventListener('click', () => this.app.snapshot());
 
-        // Settings
+        // UI & Help
         this.dom.hideUi.addEventListener('click', () => document.body.classList.toggle('ui-hidden'));
-        window.addEventListener('keydown', e => { if(e.key.toLowerCase()==='h') document.body.classList.toggle('ui-hidden'); });
-        
+        this.dom.help.addEventListener('click', () => this.dom.helpOverlay.classList.add('active'));
+        this.dom.closeHelp.addEventListener('click', () => this.dom.helpOverlay.classList.remove('active'));
+        // Close help on outside click
+        this.dom.helpOverlay.addEventListener('click', (e) => {
+            if(e.target === this.dom.helpOverlay) this.dom.helpOverlay.classList.remove('active');
+        });
+
+        // Settings
         this.dom.canvasSize.addEventListener('change', e => this.app.setResolution(e.target.value));
         this.dom.visualMode.addEventListener('change', e => this.app.setVisual(e.target.value));
         this.dom.fftSize.addEventListener('change', e => this.app.setFFT(parseInt(e.target.value)));
@@ -98,7 +110,7 @@ class UIManager {
             this.app.viz.camera.updateProjectionMatrix();
         });
         
-        // Mouse Interaction
+        // Mouse Interaction (Orbit/Pan)
         const c = document.getElementById('stage-container');
         let md = false, rmd = false, lx=0, ly=0;
         c.addEventListener('mousedown', e => { if(e.button===0) md=true; if(e.button===2) rmd=true; lx=e.clientX; ly=e.clientY; });
@@ -121,6 +133,41 @@ class UIManager {
         c.addEventListener('contextmenu', e => e.preventDefault());
     }
 
+    setupHotkeys() {
+        window.addEventListener('keydown', (e) => {
+            // Ignore if typing in an input
+            if (e.target.tagName === 'INPUT') return;
+
+            switch(e.key.toLowerCase()) {
+                case ' ':
+                case 'k': // YouTube style pause
+                    e.preventDefault();
+                    this.app.isPlaying ? this.app.pause() : this.app.play();
+                    break;
+                case 'h':
+                    document.body.classList.toggle('ui-hidden');
+                    break;
+                case 'r':
+                    if (this.app.isPlaying || this.app.recorder.isRecording) {
+                        this.dom.record.click(); // Trigger button logic/animation
+                    }
+                    break;
+                case 's':
+                    this.app.snapshot();
+                    break;
+                case 'escape':
+                    // Always show UI on Esc
+                    document.body.classList.remove('ui-hidden');
+                    this.dom.helpOverlay.classList.remove('active');
+                    break;
+                case '/':
+                case '?':
+                    this.dom.helpOverlay.classList.toggle('active');
+                    break;
+            }
+        });
+    }
+
     setupDraggables() {
         const makeDrag = (el) => {
             const h = el.querySelector('.panel-header');
@@ -134,7 +181,7 @@ class UIManager {
         };
         this.dom.panels.forEach(makeDrag);
         
-        // Resize
+        // Resize listener for viz
         window.addEventListener('resize', () => this.app.viz.handleResize());
     }
 
