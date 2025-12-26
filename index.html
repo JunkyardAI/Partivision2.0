@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PARTIVISION | Modular Visualizer</title>
-  
-  <!-- FIX: Ensure your file in the 'css' folder is named 'style.css' (singular) -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -19,15 +17,15 @@
         </div>
       </div>
       <div class="header-actions">
-        <button id="hideUiBtn" title="Toggle Interface (Press 'H')">Hide UI</button>
-        <button id="viewSourceBtn">View Source</button>
+        <button id="helpBtn" title="Keyboard Shortcuts (?)">Help</button>
+        <button id="hideUiBtn" title="Toggle Interface (H)">Hide UI</button>
+        <button id="viewSourceBtn">Source</button>
       </div>
     </div>
     <div id="controls">
       <input type="file" id="audioFile" accept="audio/*, video/*" title="Select an audio or video file">
       <button id="clearFileBtn" style="display: none;">Clear</button>
       
-      <!-- Canvas Size Control -->
       <div class="control-group">
         <span class="control-label">Resolution</span>
         <select id="canvasSize">
@@ -62,7 +60,7 @@
     </div>
   </div>
   
-  <!-- Main Stage (Centers the Canvas) -->
+  <!-- Main Stage -->
   <div id="stage-container"></div>
 
   <div id="fps-counter">FPS: 60</div>
@@ -70,10 +68,10 @@
   <!-- Playback Controls -->
   <div id="playback-controls">
     <div class="playback-buttons">
-      <button class="playback-btn" id="playBtn" title="Play">▶</button>
-      <button class="playback-btn" id="pauseBtn" title="Pause" disabled>⏸</button>
-      <button class="record-btn" id="recordBtn" title="Start High Quality Recording"></button>
-      <button class="snapshot-btn" id="snapshotBtn" title="Take Screenshot"></button>
+      <button class="playback-btn" id="playBtn" title="Play (Space)">▶</button>
+      <button class="playback-btn" id="pauseBtn" title="Pause (Space)" disabled>⏸</button>
+      <button class="record-btn" id="recordBtn" title="Record Video (R)"></button>
+      <button class="snapshot-btn" id="snapshotBtn" title="Take Snapshot (S)"></button>
     </div>
     <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
     <div class="progress-bar" id="progressBar">
@@ -87,14 +85,30 @@
   </div>
   
   <!-- Overlays -->
-  <div id="loading-overlay"><div class="loading-spinner"></div></div>
+  <div id="loading-overlay" class="active"><div class="loading-spinner"></div></div>
   <div id="drop-overlay"><div class="drop-text">Drop Audio/Video File</div></div>
   
+  <!-- Help Modal -->
+  <div id="help-overlay">
+      <div class="help-content">
+          <h2>Keyboard Shortcuts</h2>
+          <div class="shortcut-list">
+              <div class="shortcut-item"><span>Space</span> <span>Play / Pause</span></div>
+              <div class="shortcut-item"><span>H</span> <span>Toggle UI</span></div>
+              <div class="shortcut-item"><span>R</span> <span>Start/Stop Recording</span></div>
+              <div class="shortcut-item"><span>S</span> <span>Take Snapshot</span></div>
+              <div class="shortcut-item"><span>Esc</span> <span>Show UI / Close Help</span></div>
+              <div class="shortcut-item"><span>?</span> <span>Toggle Help</span></div>
+          </div>
+          <button id="closeHelpBtn">Close</button>
+      </div>
+  </div>
+
   <!-- Source Code Modal -->
   <div id="source-code-overlay">
       <div id="source-code-modal">
           <div class="source-header">
-              <h3>Application Source Code</h3>
+              <h3>Source Code</h3>
               <div><button id="copySourceBtn">Copy</button><button id="closeSourceBtn">Close</button></div>
           </div>
           <div id="source-code-container"><pre><code id="source-code-content"></code></pre></div>
@@ -103,8 +117,8 @@
 
   <div id="disclaimer">
       <button id="disclaimer-close">&times;</button>
-      <strong>Modular & Secure</strong>
-      <p>This app runs entirely in your browser. No data is uploaded.</p>
+      <strong>Ready</strong>
+      <p>Drop a file to start.</p>
   </div>
   
   <!-- Settings Panels -->
@@ -138,7 +152,7 @@
     </div>
   </div>
   
-  <!-- 1. External Dependencies (Three.js & Post-Processing) -->
+  <!-- Dependencies -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
@@ -147,14 +161,12 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
-  <!-- 2. Application Modules -->
-  <script src="js/DebugEngine.js"></script> <!-- ADDED HERE -->
+  <!-- App Modules -->
+  <script src="js/DebugEngine.js"></script>
   <script src="js/AudioEngine.js"></script>
   <script src="js/VisualizerEngine.js"></script>
   <script src="js/RecorderEngine.js"></script>
   <script src="js/UIManager.js"></script>
-  
-  <!-- 3. Main App Controller -->
   <script src="js/App.js"></script>
 </body>
 </html>
