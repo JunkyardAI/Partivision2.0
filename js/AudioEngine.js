@@ -24,7 +24,8 @@ class AudioEngine {
         this.context = new (window.AudioContext || window.webkitAudioContext)();
         this.analyser = this.context.createAnalyser();
         this.analyser.fftSize = this.fftSize;
-        this.analyser.smoothingTimeConstant = 0.8;
+        // INCREASED SMOOTHING FOR "CREAMY" FLOW (0.8 -> 0.85)
+        this.analyser.smoothingTimeConstant = 0.85;
         this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
         this.recordingDest = this.context.createMediaStreamDestination();
     }
@@ -48,6 +49,8 @@ class AudioEngine {
         this.source.connect(this.recordingDest);
 
         this.audioElement.addEventListener('loadedmetadata', () => {
+            // Signal App that we are ready, but DO NOT play automatically here.
+            // Let App.js handle the logic.
             if (this.onLoaded) this.onLoaded();
         });
         this.audioElement.addEventListener('timeupdate', () => { if(this.onTimeUpdate) this.onTimeUpdate(); });
