@@ -24,44 +24,64 @@ class AudioEngine {
         this.context = new (window.AudioContext || window.webkitAudioContext)();
         this.analyser = this.context.createAnalyser();
         this.analyser.fftSize = this.fftSize;
-        // INCREASED SMOOTHING FOR "CREAMY" FLOW (0.8 -> 0.85)
-        this.analyser.smoothingTimeConstant = 0.85;
+        // Smoothing constant: 0.85 is standard, 0.9 is very smooth
+        this.analyser.smoothingTimeConstant = 0.85; 
         this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
         this.recordingDest = this.context.createMediaStreamDestination();
     }
 
     load(blobUrl) {
         this.init();
+        
+        // Cleanup old element
         if (this.audioElement) {
             this.audioElement.pause();
             this.audioElement.src = '';
+            this.audioElement.load(); // Force release
         }
 
         this.audioElement = new Audio(blobUrl);
         this.audioElement.crossOrigin = "anonymous";
         
-        if (this.source) this.source.disconnect();
+        // Disconnect old source
+        if (this.source) {
+            try { this.source.disconnect(); } catch(e) {}
+        }
+        
+        // Create new source
         this.source = this.context.createMediaElementSource(this.audioElement);
         
-        // Routing: Source -> Analyser -> Speakers -> Recording Destination
+        // Connect graph
         this.source.connect(this.analyser);
         this.analyser.connect(this.context.destination);
         this.source.connect(this.recordingDest);
 
-        this.audioElement.addEventListener('loadedmetadata', () => {
-            // Signal App that we are ready, but DO NOT play automatically here.
-            // Let App.js handle the logic.
+        this.audioElement.addEventListener('canplaythrough', () => {
             if (this.onLoaded) this.onLoaded();
-        });
+        }, { once: true }); // Only fire once per load
+
         this.audioElement.addEventListener('timeupdate', () => { if(this.onTimeUpdate) this.onTimeUpdate(); });
         this.audioElement.addEventListener('ended', () => { if(this.onEnded) this.onEnded(); });
-        this.audioElement.addEventListener('error', (e) => { if(this.onError) this.onError(e); });
+        this.audioElement.addEventListener('error', (e) => { 
+            console.error("Audio Element Error", e);
+            if(this.onError) this.onError(e); 
+        });
     }
 
     play() {
         if (!this.audioElement) return;
-        if (this.context.state === 'suspended') this.context.resume();
-        this.audioElement.play().catch(e => console.error(e));
+        
+        // Always try to resume context
+        if (this.context.state === 'suspended') {
+            this.context.resume();
+        }
+
+        const playPromise = this.audioElement.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.warn("Auto-play prevented. User interaction required.", error);
+            });
+        }
     }
 
     pause() {
@@ -96,10 +116,4 @@ class AudioEngine {
     getDuration() { return this.audioElement ? this.audioElement.duration : 0; }
     getCurrentTime() { return this.audioElement ? this.audioElement.currentTime : 0; }
     getAudioStream() { return this.recordingDest ? this.recordingDest.stream : null; }
-    
-    clear() {
-        this.pause();
-        if (this.source) this.source.disconnect();
-        this.audioElement = null;
-    }
 }
