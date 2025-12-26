@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PARTIVISION | Modular Visualizer</title>
+  
+  <!-- Load the separated CSS file -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <div id="header">
+    <div class="header-top">
+      <div class="logo">
+        <div>
+          <h1>PARTIVISION</h1>
+          <div class="tagline">Modular Audio Visualizer</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="hideUiBtn" title="Toggle Interface (Press 'H')">Hide UI</button>
+        <button id="viewSourceBtn">View Source</button>
+      </div>
+    </div>
+    <div id="controls">
+      <input type="file" id="audioFile" accept="audio/*, video/*" title="Select an audio or video file">
+      <button id="clearFileBtn" style="display: none;">Clear</button>
+      
+      <!-- Canvas Size Control -->
+      <div class="control-group">
+        <span class="control-label">Resolution</span>
+        <select id="canvasSize">
+          <option value="window">Window (Fit)</option>
+          <option value="1080x1920">9:16 (TikTok/Reels)</option>
+          <option value="1920x1080">16:9 (YouTube)</option>
+          <option value="1080x1080">1:1 (Square)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Visual</span>
+        <select id="visualMode">
+          <option value="particles">Particle Field</option>
+          <option value="sphere">Frequency Sphere</option>
+          <option value="galaxy">Galaxy</option>
+          <option value="terrain">Spectrum Terrain</option>
+          <option value="crystalline">Crystal Matrix</option>
+          <option value="parametricEq">Parametric EQ</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <span class="control-label">FFT</span>
+        <select id="fftSize">
+          <option value="512">512</option>
+          <option value="1024">1024</option>
+          <option value="2048" selected>2048</option>
+          <option value="4096">4096</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Stage (Centers the Canvas) -->
+  <div id="stage-container"></div>
+
+  <div id="fps-counter">FPS: 60</div>
+  
+  <!-- Playback Controls -->
+  <div id="playback-controls">
+    <div class="playback-buttons">
+      <button class="playback-btn" id="playBtn" title="Play">▶</button>
+      <button class="playback-btn" id="pauseBtn" title="Pause" disabled>⏸</button>
+      <button class="record-btn" id="recordBtn" title="Start High Quality Recording"></button>
+      <button class="snapshot-btn" id="snapshotBtn" title="Take Screenshot"></button>
+    </div>
+    <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Volume</span>
+      <input type="range" id="volume" min="0" max="100" value="70">
+      <span class="value-display" id="vol-val">70%</span>
+    </div>
+  </div>
+  
+  <!-- Overlays -->
+  <div id="loading-overlay"><div class="loading-spinner"></div></div>
+  <div id="drop-overlay"><div class="drop-text">Drop Audio/Video File</div></div>
+  
+  <!-- Source Code Modal -->
+  <div id="source-code-overlay">
+      <div id="source-code-modal">
+          <div class="source-header">
+              <h3>Application Source Code</h3>
+              <div><button id="copySourceBtn">Copy</button><button id="closeSourceBtn">Close</button></div>
+          </div>
+          <div id="source-code-container"><pre><code id="source-code-content"></code></pre></div>
+      </div>
+  </div>
+
+  <div id="disclaimer">
+      <button id="disclaimer-close">&times;</button>
+      <strong>Modular & Secure</strong>
+      <p>This app runs entirely in your browser. No data is uploaded.</p>
+  </div>
+  
+  <!-- Settings Panels -->
+  <div id="camera-controls" class="settings-panel" style="right: 20px;">
+    <div class="panel-header"><div class="settings-title">Camera Control</div></div>
+    <div class="panel-content">
+      <div class="camera-mode-buttons">
+        <button class="cam-mode-btn active" data-mode="orbit">Orbit</button>
+        <button class="cam-mode-btn" data-mode="fly">Fly</button>
+        <button class="cam-mode-btn" data-mode="fps">FPS</button>
+        <button class="cam-mode-btn" data-mode="fixed">Fixed</button>
+      </div>
+      <div class="settings-slider"><label>Distance</label><input type="range" id="camDistance" min="10" max="200" value="50"></div>
+      <div class="settings-slider"><label>Speed</label><input type="range" id="camSpeed" min="0" max="2" step="0.1" value="0.5"></div>
+      <div class="settings-slider"><label>FOV</label><input type="range" id="camFOV" min="30" max="120" value="75"></div>
+    </div>
+  </div>
+  
+  <div id="visualizer-params" class="settings-panel" style="right: 240px;">
+    <div class="panel-header"><div class="settings-title">Visual Parameters</div></div>
+    <div class="panel-content">
+      <div class="settings-slider"><label>Particle Size</label><input type="range" id="particleSize" min="0.1" max="5" step="0.1" value="1"></div>
+      <div class="settings-slider"><label>Color Intensity</label><input type="range" id="colorIntensity" min="0" max="2" step="0.1" value="1"></div>
+      <div class="settings-slider"><label>Bloom Strength</label><input type="range" id="bloomStrength" min="0" max="2" step="0.1" value="0.5"></div>
+      <div class="preset-buttons">
+        <button class="preset-btn" data-preset="subtle">Subtle</button>
+        <button class="preset-btn" data-preset="intense">Intense</button>
+        <button class="preset-btn" data-preset="club">Club</button>
+        <button class="preset-btn" data-preset="minimal">Minimal</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 1. External Dependencies (Three.js & Post-Processing) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <!-- 2. Application Modules (Load order matters!) -->
+  <script src="js/AudioEngine.js"></script>
+  <script src="js/VisualizerEngine.js"></script>
+  <script src="js/RecorderEngine.js"></script>
+  <script src="js/UIManager.js"></script>
+  
+  <!-- 3. Main App Controller (Initializes everything) -->
+  <script src="js/App.js"></script>
+</body>
+</html>
