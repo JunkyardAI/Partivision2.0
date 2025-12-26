@@ -96,8 +96,9 @@ class VisualizerEngine {
 
     initVisuals() {
         // Helpers to keep code clean
-        const createMesh = (geo, mat) => { const m = new THREE.Mesh(geo, mat); this.scene.add(m); return m; };
-        const createPoints = (geo, mat) => { const p = new THREE.Points(geo, mat); this.scene.add(p); return p; };
+        // Initialize everything to visible=false
+        const createMesh = (geo, mat) => { const m = new THREE.Mesh(geo, mat); this.scene.add(m); m.visible = false; return m; };
+        const createPoints = (geo, mat) => { const p = new THREE.Points(geo, mat); this.scene.add(p); p.visible = false; return p; };
 
         // 1. Particles
         const pg = new THREE.BufferGeometry();
@@ -147,16 +148,14 @@ class VisualizerEngine {
             this.visualizations.crystalline.add(m);
         }
         this.scene.add(this.visualizations.crystalline);
+        this.visualizations.crystalline.visible = false;
 
         this.switchVisual(this.currentViz);
     }
 
     switchVisual(name) {
         this.currentViz = name;
-        for(let k in this.visualizations) {
-            const obj = this.visualizations[k];
-            if(obj) obj.visible = (k === name);
-        }
+        // Don't auto-show here; update() loop handles visibility based on play state
     }
 
     update(freqData, params) {
@@ -188,12 +187,25 @@ class VisualizerEngine {
         // Update Bloom
         if (this.bloomPass) this.bloomPass.strength = params.bloom;
 
-        // --- VISUALIZATION UPDATE (Only runs if audio data exists) ---
-        if (freqData) {
+        // VISIBILITY LOGIC
+        // If no data (not playing), hide everything.
+        if (!freqData) {
+            for(let k in this.visualizations) {
+                if(this.visualizations[k]) this.visualizations[k].visible = false;
+            }
+        } else {
+            // Ensure proper visibility for current selection
+            for(let k in this.visualizations) {
+                if(this.visualizations[k]) {
+                    this.visualizations[k].visible = (k === this.currentViz);
+                }
+            }
+
             const len = freqData.length;
             const sensitivity = 2.0;
 
             const updateGeo = (obj, fn) => {
+                if(!obj.geometry) return;
                 const pos = obj.geometry.attributes.position;
                 const orig = obj.geometry.userData.orig.array;
                 const arr = pos.array;
@@ -276,8 +288,7 @@ class VisualizerEngine {
             }
         }
         
-        // --- ALWAYS RENDER (Even if paused) ---
-        // FIX: Moved this outside the 'if (freqData)' block so the scene renders even without audio
+        // --- ALWAYS RENDER ---
         this.composer.render();
     }
 
