@@ -277,6 +277,7 @@ class VisualizerEngine {
         }
         
         // --- ALWAYS RENDER (Even if paused) ---
+        // FIX: Moved this outside the 'if (freqData)' block so the scene renders even without audio
         this.composer.render();
     }
 
