@@ -15,7 +15,7 @@ class App {
         
         // Unlock Audio Context on first interaction
         const unlockAudio = () => {
-            if (this.audio.context.state === 'suspended') {
+            if (this.audio.context && this.audio.context.state === 'suspended') {
                 this.audio.context.resume().then(() => {
                     this.debug.log("SYSTEM", "Audio Context Resumed");
                 });
@@ -34,7 +34,7 @@ class App {
             
             this.debug.log("AUDIO", "File Loaded Successfully");
             
-            // Try to play; if blocked, it will wait for interaction
+            // Try to play immediately
             this.play(); 
         };
         
