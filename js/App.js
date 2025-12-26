@@ -4,9 +4,7 @@
    ========================================= */
 class App {
     constructor() {
-        // Initialize Debug Engine First
         this.debug = new DebugEngine();
-        
         this.audio = new AudioEngine();
         this.viz = new VisualizerEngine('stage-container');
         this.recorder = new RecorderEngine(this.audio, this.viz);
@@ -15,6 +13,19 @@ class App {
         this.isPlaying = false;
         this.params = { size: 1, color: 1, bloom: 0.5 };
         
+        // Unlock Audio Context on first interaction
+        const unlockAudio = () => {
+            if (this.audio.context.state === 'suspended') {
+                this.audio.context.resume().then(() => {
+                    this.debug.log("SYSTEM", "Audio Context Resumed");
+                });
+            }
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('keydown', unlockAudio);
+        };
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('keydown', unlockAudio);
+
         // Audio Hooks
         this.audio.onLoaded = () => {
             this.ui.dom.loading.classList.remove('active');
@@ -22,9 +33,9 @@ class App {
             this.ui.dom.clearFileBtn.style.display = 'inline-block';
             
             this.debug.log("AUDIO", "File Loaded Successfully");
-            this.debug.log("AUDIO", `Duration: ${this.audio.getDuration().toFixed(2)}s`);
             
-            this.play();
+            // Try to play; if blocked, it will wait for interaction
+            this.play(); 
         };
         
         this.audio.onError = (e) => {
@@ -52,13 +63,18 @@ class App {
             return;
         }
         
-        this.debug.log("SYSTEM", `Loading: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`);
+        this.debug.log("SYSTEM", `Loading: ${file.name}`);
         this.ui.dom.loading.classList.add('active');
         if(this.isPlaying) this.pause();
         this.audio.load(URL.createObjectURL(file));
     }
 
     play() { 
+        // Ensure context is running
+        if (this.audio.context.state === 'suspended') {
+            this.audio.context.resume();
+        }
+        
         this.audio.play(); 
         this.isPlaying = true; 
         this.ui.dom.play.disabled = true; 
@@ -78,45 +94,43 @@ class App {
 
     seek(pct) { 
         this.audio.seek(pct); 
-        this.debug.log("AUDIO", `Seek to ${Math.round(pct*100)}%`);
+        this.debug.log("AUDIO", `Seek`);
     }
     
     toggleRecord() { 
         if (this.recorder.isRecording) {
             this.recorder.stop();
-            this.debug.log("REC", "Recording Stopped. Starting Export...");
+            this.debug.log("REC", "Stopping...");
             this.debug.setPipelineStatus('EXPORTING');
-            
-            // Simulate export time
             setTimeout(() => {
-                this.debug.log("REC", "Export Complete. Downloading...");
+                this.debug.log("REC", "Export Complete");
                 this.debug.setPipelineStatus(this.isPlaying ? 'PROCESSING' : 'IDLE');
             }, 1000);
         } else {
             this.recorder.start();
-            this.debug.log("REC", "Recording Started (15 Mbps)");
+            this.debug.log("REC", "Recording Started");
             this.debug.setPipelineStatus('RECORDING');
         }
     }
     
     snapshot() { 
         this.recorder.snapshot(); 
-        this.debug.log("REC", "Snapshot Captured (PNG)");
+        this.debug.log("REC", "Snapshot Taken");
     }
     
     setResolution(mode) { 
         this.viz.setResolution(mode); 
-        this.debug.log("VIZ", `Resolution Set: ${mode}`);
+        this.debug.log("VIZ", `Res: ${mode}`);
     }
     
     setVisual(mode) { 
         this.viz.switchVisual(mode); 
-        this.debug.log("VIZ", `Visual Model Switched: ${mode}`);
+        this.debug.log("VIZ", `Mode: ${mode}`);
     }
     
     setFFT(size) { 
         this.audio.setFFTSize(size); 
-        this.debug.log("AUDIO", `FFT Size Updated: ${size}`);
+        this.debug.log("AUDIO", `FFT: ${size}`);
     }
     
     updateParams() {
