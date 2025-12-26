@@ -13,7 +13,9 @@ class VisualizerEngine {
         
         this.visualizations = {};
         this.currentViz = 'particles';
-        this.isVisualsVisible = false; // Track state to avoid redundant updates
+        
+        // Track state to avoid redundant updates
+        this.isVisualsVisible = null; // Start null to force first update
         
         // Camera State
         this.camState = { mode: 'orbit', dist: 50, speed: 0.5, theta: Math.PI/4, phi: Math.PI/4, pan: new THREE.Vector3() };
@@ -155,24 +157,19 @@ class VisualizerEngine {
 
     switchVisual(name) {
         this.currentViz = name;
-        // Optimization: Don't loop over everything here, let update() handle the single switch if needed
-        // But for UI responsiveness, we force an update of visibility flags immediately
-        this.updateVisibilityFlags(true); // Assuming if they switch, they want to see it (if playing)
+        // Force update of visibility flags because the user changed the selection
+        this.updateVisibilityFlags(true, true); 
     }
 
-    updateVisibilityFlags(shouldBeVisible) {
-        // Optimization: Only touch the DOM/Scene Graph if the state actually changes
-        if (this.isVisualsVisible === shouldBeVisible) return;
+    updateVisibilityFlags(shouldBeVisible, forceUpdate = false) {
+        // PERFORMANCE FIX: Only loop if state changed OR if forced (by switchVisual)
+        if (!forceUpdate && this.isVisualsVisible === shouldBeVisible) return;
         
         this.isVisualsVisible = shouldBeVisible;
 
         for(let k in this.visualizations) {
             if(this.visualizations[k]) {
-                // If we should show visuals, only show the CURRENT one.
-                // If we should hide visuals, hide ALL.
                 const targetState = shouldBeVisible ? (k === this.currentViz) : false;
-                
-                // Only update if different
                 if (this.visualizations[k].visible !== targetState) {
                     this.visualizations[k].visible = targetState;
                 }
@@ -209,11 +206,13 @@ class VisualizerEngine {
         // Update Bloom
         if (this.bloomPass) this.bloomPass.strength = params.bloom;
 
-        // VISIBILITY LOGIC OPTIMIZED
-        // Check if we have data. If yes, we want visuals visible. If no, hidden.
-        // We defer the heavy looping to updateVisibilityFlags which checks for redundancy.
+        // PERFORMANCE FIX: 
+        // 1. Determine play state
         const isPlaying = !!freqData;
-        this.updateVisibilityFlags(isPlaying);
+        // 2. Call visibility updater with NO forced flag. 
+        //    This means it will instantly RETURN if state hasn't changed.
+        //    This prevents the loop from running 60 times a second.
+        this.updateVisibilityFlags(isPlaying, false);
 
         // GEOMETRY UPDATE
         if (isPlaying) {
@@ -304,7 +303,6 @@ class VisualizerEngine {
             }
         }
         
-        // --- ALWAYS RENDER ---
         this.composer.render();
     }
 
