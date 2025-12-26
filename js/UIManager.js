@@ -12,9 +12,9 @@ class UIManager {
             record: document.getElementById('recordBtn'),
             snap: document.getElementById('snapshotBtn'),
             hideUi: document.getElementById('hideUiBtn'),
-            help: document.getElementById('helpBtn'), // New Help Button
-            helpOverlay: document.getElementById('help-overlay'), // New Help Overlay
-            closeHelp: document.getElementById('closeHelpBtn'), // New Close Help
+            help: document.getElementById('helpBtn'), 
+            helpOverlay: document.getElementById('help-overlay'), 
+            closeHelp: document.getElementById('closeHelpBtn'),
             canvasSize: document.getElementById('canvasSize'),
             visualMode: document.getElementById('visualMode'),
             fftSize: document.getElementById('fftSize'),
@@ -24,7 +24,7 @@ class UIManager {
             loading: document.getElementById('loading-overlay'),
             drop: document.getElementById('drop-overlay'),
             panels: document.querySelectorAll('.settings-panel'),
-            playbackControls: document.getElementById('playback-controls'), // Needed for visibility toggling
+            playbackControls: document.getElementById('playback-controls'),
             clearFileBtn: document.getElementById('clearFileBtn')
         };
 
@@ -46,6 +46,7 @@ class UIManager {
         // Recording
         this.dom.record.addEventListener('click', () => {
             this.app.toggleRecord();
+            // Update UI State
             this.dom.record.classList.toggle('recording', this.app.recorder.isRecording);
             this.dom.record.title = this.app.recorder.isRecording ? "Stop Recording (R)" : "Start High Quality Recording (R)";
         });
@@ -55,7 +56,6 @@ class UIManager {
         this.dom.hideUi.addEventListener('click', () => document.body.classList.toggle('ui-hidden'));
         this.dom.help.addEventListener('click', () => this.dom.helpOverlay.classList.add('active'));
         this.dom.closeHelp.addEventListener('click', () => this.dom.helpOverlay.classList.remove('active'));
-        // Close help on outside click
         this.dom.helpOverlay.addEventListener('click', (e) => {
             if(e.target === this.dom.helpOverlay) this.dom.helpOverlay.classList.remove('active');
         });
@@ -135,12 +135,11 @@ class UIManager {
 
     setupHotkeys() {
         window.addEventListener('keydown', (e) => {
-            // Ignore if typing in an input
             if (e.target.tagName === 'INPUT') return;
 
             switch(e.key.toLowerCase()) {
                 case ' ':
-                case 'k': // YouTube style pause
+                case 'k': 
                     e.preventDefault();
                     this.app.isPlaying ? this.app.pause() : this.app.play();
                     break;
@@ -148,15 +147,13 @@ class UIManager {
                     document.body.classList.toggle('ui-hidden');
                     break;
                 case 'r':
-                    if (this.app.isPlaying || this.app.recorder.isRecording) {
-                        this.dom.record.click(); // Trigger button logic/animation
-                    }
+                    // Simulate button click to keep UI state in sync
+                    this.dom.record.click(); 
                     break;
                 case 's':
                     this.app.snapshot();
                     break;
                 case 'escape':
-                    // Always show UI on Esc
                     document.body.classList.remove('ui-hidden');
                     this.dom.helpOverlay.classList.remove('active');
                     break;
