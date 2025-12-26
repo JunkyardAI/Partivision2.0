@@ -13,6 +13,7 @@ class VisualizerEngine {
         
         this.visualizations = {};
         this.currentViz = 'particles';
+        this.isVisualsVisible = false; // Track state to avoid redundant updates
         
         // Camera State
         this.camState = { mode: 'orbit', dist: 50, speed: 0.5, theta: Math.PI/4, phi: Math.PI/4, pan: new THREE.Vector3() };
@@ -96,7 +97,6 @@ class VisualizerEngine {
 
     initVisuals() {
         // Helpers to keep code clean
-        // Initialize everything to visible=false
         const createMesh = (geo, mat) => { const m = new THREE.Mesh(geo, mat); this.scene.add(m); m.visible = false; return m; };
         const createPoints = (geo, mat) => { const p = new THREE.Points(geo, mat); this.scene.add(p); p.visible = false; return p; };
 
@@ -155,7 +155,29 @@ class VisualizerEngine {
 
     switchVisual(name) {
         this.currentViz = name;
-        // Don't auto-show here; update() loop handles visibility based on play state
+        // Optimization: Don't loop over everything here, let update() handle the single switch if needed
+        // But for UI responsiveness, we force an update of visibility flags immediately
+        this.updateVisibilityFlags(true); // Assuming if they switch, they want to see it (if playing)
+    }
+
+    updateVisibilityFlags(shouldBeVisible) {
+        // Optimization: Only touch the DOM/Scene Graph if the state actually changes
+        if (this.isVisualsVisible === shouldBeVisible) return;
+        
+        this.isVisualsVisible = shouldBeVisible;
+
+        for(let k in this.visualizations) {
+            if(this.visualizations[k]) {
+                // If we should show visuals, only show the CURRENT one.
+                // If we should hide visuals, hide ALL.
+                const targetState = shouldBeVisible ? (k === this.currentViz) : false;
+                
+                // Only update if different
+                if (this.visualizations[k].visible !== targetState) {
+                    this.visualizations[k].visible = targetState;
+                }
+            }
+        }
     }
 
     update(freqData, params) {
@@ -187,20 +209,14 @@ class VisualizerEngine {
         // Update Bloom
         if (this.bloomPass) this.bloomPass.strength = params.bloom;
 
-        // VISIBILITY LOGIC
-        // If no data (not playing), hide everything.
-        if (!freqData) {
-            for(let k in this.visualizations) {
-                if(this.visualizations[k]) this.visualizations[k].visible = false;
-            }
-        } else {
-            // Ensure proper visibility for current selection
-            for(let k in this.visualizations) {
-                if(this.visualizations[k]) {
-                    this.visualizations[k].visible = (k === this.currentViz);
-                }
-            }
+        // VISIBILITY LOGIC OPTIMIZED
+        // Check if we have data. If yes, we want visuals visible. If no, hidden.
+        // We defer the heavy looping to updateVisibilityFlags which checks for redundancy.
+        const isPlaying = !!freqData;
+        this.updateVisibilityFlags(isPlaying);
 
+        // GEOMETRY UPDATE
+        if (isPlaying) {
             const len = freqData.length;
             const sensitivity = 2.0;
 
