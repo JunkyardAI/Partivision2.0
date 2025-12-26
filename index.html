@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PARTIVISION | Modular Visualizer</title>
+  <title>PARTIVISION </title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -17,8 +17,8 @@
         </div>
       </div>
       <div class="header-actions">
-        <button id="helpBtn" title="Keyboard Shortcuts (?)">Help</button>
-        <button id="hideUiBtn" title="Toggle Interface (H)">Hide UI</button>
+        <button id="helpBtn" title="View Keyboard Shortcuts (?)">Help</button>
+        <button id="hideUiBtn" title="Toggle UI (H)">Hide UI</button>
         <button id="viewSourceBtn">Source</button>
       </div>
     </div>
@@ -68,6 +68,7 @@
   <!-- Playback Controls -->
   <div id="playback-controls">
     <div class="playback-buttons">
+      <!-- Added explicit (Key) hints to titles -->
       <button class="playback-btn" id="playBtn" title="Play (Space)">▶</button>
       <button class="playback-btn" id="pauseBtn" title="Pause (Space)" disabled>⏸</button>
       <button class="record-btn" id="recordBtn" title="Record Video (R)"></button>
@@ -91,14 +92,14 @@
   <!-- Help Modal -->
   <div id="help-overlay">
       <div class="help-content">
-          <h2>Keyboard Shortcuts</h2>
+          <h2>Controls & Hotkeys</h2>
           <div class="shortcut-list">
               <div class="shortcut-item"><span>Space</span> <span>Play / Pause</span></div>
-              <div class="shortcut-item"><span>H</span> <span>Toggle UI</span></div>
-              <div class="shortcut-item"><span>R</span> <span>Start/Stop Recording</span></div>
-              <div class="shortcut-item"><span>S</span> <span>Take Snapshot</span></div>
-              <div class="shortcut-item"><span>Esc</span> <span>Show UI / Close Help</span></div>
-              <div class="shortcut-item"><span>?</span> <span>Toggle Help</span></div>
+              <div class="shortcut-item"><span>H</span> <span>Toggle UI Visibility</span></div>
+              <div class="shortcut-item"><span>R</span> <span>Start / Stop Recording</span></div>
+              <div class="shortcut-item"><span>S</span> <span>Take Snapshot (PNG)</span></div>
+              <div class="shortcut-item"><span>Esc</span> <span>Show UI / Close Panels</span></div>
+              <div class="shortcut-item"><span>?</span> <span>Open This Help</span></div>
           </div>
           <button id="closeHelpBtn">Close</button>
       </div>
@@ -133,7 +134,7 @@
       </div>
       <div class="settings-slider"><label>Distance</label><input type="range" id="camDistance" min="10" max="200" value="50"></div>
       <div class="settings-slider"><label>Speed</label><input type="range" id="camSpeed" min="0" max="2" step="0.1" value="0.5"></div>
-      <div class="settings-slider"><label>FOV</label><input type="range" id="camFOV" min="30" max="120" value="75"></div>
+      <div class="settings-slider"><label>FOV (Field Of View) </label><input type="range" id="camFOV" min="30" max="120" value="75"></div>
     </div>
   </div>
   
