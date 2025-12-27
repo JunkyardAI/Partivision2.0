@@ -1,6 +1,5 @@
 /* =========================================
    MAIN APP CONTROLLER 2.2 PRO
-   Handles Automation, UI Updates, and Transitions
    ========================================= */
 class App {
     constructor() {
@@ -12,29 +11,29 @@ class App {
         this.isPlaying = false;
         this.params = { size: 1, color: 1, bloom: 0.8, fps: 60, bitcrush: 1 };
         
+        // Automation Engine (Macros)
         this.macros = {
             sizeLFO: { active: false, speed: 2.0 },
-            autoOrbit: { active: false, speed: 1.0 },
+            autoOrbit: { active: false, speed: 0.5 },
             warpDrive: { active: false, intensity: 0 }
         };
 
-        this.transitionQueue = [];
         this.lastFrameTime = 0;
-
         this.viz.init();
         this.loop();
     }
 
     load(file) {
+        if (!file) return;
         this.audio.load(URL.createObjectURL(file));
-        this.ui.log("SYSTEM", `Data Ingest: ${file.name}`);
+        this.ui.log("SYSTEM", `Data Ingestion: ${file.name}`);
     }
 
     queueTransition(mode, delay) {
-        this.ui.log("QUEUE", `T-minus ${delay}s to ${mode}`);
+        this.ui.log("QUEUE", `Scheduling transition to ${mode} in ${delay}s...`);
         setTimeout(() => {
             this.setVisual(mode);
-            this.ui.log("PIPELINE", `Switching to ${mode}`);
+            this.ui.log("PIPELINE", `Executed transition: ${mode}`);
         }, delay * 1000);
     }
 
@@ -65,6 +64,7 @@ class App {
         
         if (now - this.lastFrameTime >= interval) {
             this.lastFrameTime = now;
+            
             this.runMacros();
             
             const data = this.isPlaying ? this.audio.getFrequencyData() : null;
