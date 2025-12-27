@@ -3,55 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PARTIVISION </title>
+  <title>PARTIVISION 2.2 | Modular Pro</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Header -->
   <div id="header">
-    <div class="header-top">
-      <div class="logo">
-        <div>
-          <h1>PARTIVISION</h1>
-          <div class="tagline">Modular Audio Visualizer</div>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button id="helpBtn" title="View Keyboard Shortcuts (?)">Help</button>
-        <button id="hideUiBtn" title="Toggle UI (H)">Hide UI</button>
-        <button id="viewSourceBtn">Source</button>
-      </div>
+    <div class="logo">
+      <h1>PARTIVISION</h1>
+      <div class="tagline">Modular Audio Visualizer</div>
     </div>
     <div id="controls">
-      <input type="file" id="audioFile" accept="audio/*, video/*" title="Select an audio or video file">
-      <button id="clearFileBtn" style="display: none;">Clear</button>
-      
+      <input type="file" id="audioFile" accept="audio/*">
       <div class="control-group">
-        <span class="control-label">Resolution</span>
-        <select id="canvasSize">
-          <option value="window">Window (Fit)</option>
-          <option value="1080x1920">9:16 (TikTok/Reels)</option>
-          <option value="1920x1080">16:9 (YouTube)</option>
-          <option value="1080x1080">1:1 (Square)</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <span class="control-label">Visual</span>
+        <label>Visual Mode</label>
         <select id="visualMode">
           <option value="particles">Particle Field</option>
-          <option value="sphere">Frequency Sphere</option>
-          <option value="galaxy">Galaxy</option>
           <option value="star">Stellar Core</option>
-          <option value="crystalline">Crystal Matrix</option>
+          <option value="sphere">Frequency Sphere</option>
+          <option value="galaxy">Nebula Galaxy</option>
           <option value="parametricEq">Parametric EQ</option>
         </select>
       </div>
-      
+    </div>
+  </div>
+  
+  <div id="stage-container"></div>
+
+  <!-- FIXED: Optimization Panel was missing from original modular index -->
+  <div id="opt-panel" class="settings-panel" style="top: 100px; left: 20px;">
+    <div class="panel-header"><div class="panel-title">Optimization Engine</div></div>
+    <div class="panel-content">
       <div class="control-group">
-        <span class="control-label">FFT</span>
+        <label>Target FPS</label>
+        <select id="targetFPS">
+          <option value="30">30 FPS</option>
+          <option value="60" selected>60 FPS</option>
+          <option value="120">Uncapped</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Res Crunch (Bitcrush)</label>
+        <input type="range" id="bitcrush" min="1" max="8" step="1" value="1">
+      </div>
+      <div class="control-group">
+        <label>FFT Size</label>
         <select id="fftSize">
-          <option value="512">512</option>
           <option value="1024">1024</option>
           <option value="2048" selected>2048</option>
           <option value="4096">4096</option>
@@ -59,110 +55,24 @@
       </div>
     </div>
   </div>
-  
-  <!-- Main Stage -->
-  <div id="stage-container"></div>
 
-  <div id="fps-counter">FPS: 60</div>
-  
-  <!-- Playback Controls -->
-  <div id="playback-controls">
-    <div class="playback-buttons">
-      <button class="playback-btn" id="playBtn" title="Play (Space)">▶</button>
-      <button class="playback-btn" id="pauseBtn" title="Pause (Space)" disabled>⏸</button>
-      <button class="record-btn" id="recordBtn" title="Record Video (R)"></button>
-      <button class="snapshot-btn" id="snapshotBtn" title="Take Snapshot (S)"></button>
-    </div>
-    <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
-    <div class="progress-bar" id="progressBar">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-    <div class="control-group">
-      <span class="control-label">Volume</span>
-      <input type="range" id="volume" min="0" max="100" value="70">
-      <span class="value-display" id="vol-val">70%</span>
-    </div>
+  <div id="transport-bar">
+    <button id="playBtn">▶</button>
+    <button id="pauseBtn" disabled>⏸</button>
+    <div id="progressBar"><div id="progressFill"></div></div>
+    <div id="timeDisplay">0:00 / 0:00</div>
+    <input type="range" id="volume" min="0" max="100" value="70">
   </div>
   
-  <!-- Overlays -->
-  <div id="loading-overlay" class="active"><div class="loading-spinner"></div></div>
-  <div id="drop-overlay"><div class="drop-text">Drop Audio/Video File</div></div>
-  
-  <!-- Help Modal -->
-  <div id="help-overlay">
-      <div class="help-content">
-          <h2>Controls & Hotkeys</h2>
-          <div class="shortcut-list">
-              <div class="shortcut-item"><span>Space</span> <span>Play / Pause</span></div>
-              <div class="shortcut-item"><span>H</span> <span>Toggle UI Visibility</span></div>
-              <div class="shortcut-item"><span>R</span> <span>Start / Stop Recording</span></div>
-              <div class="shortcut-item"><span>S</span> <span>Take Snapshot (PNG)</span></div>
-              <div class="shortcut-item"><span>Esc</span> <span>Show UI / Close Panels</span></div>
-              <div class="shortcut-item"><span>?</span> <span>Open This Help</span></div>
-          </div>
-          <button id="closeHelpBtn">Close</button>
-      </div>
-  </div>
+  <div id="drop-overlay">DROP STREAM</div>
 
-  <!-- Source Code Modal -->
-  <div id="source-code-overlay">
-      <div id="source-code-modal">
-          <div class="source-header">
-              <h3>Source Code</h3>
-              <div><button id="copySourceBtn">Copy</button><button id="closeSourceBtn">Close</button></div>
-          </div>
-          <div id="source-code-container"><pre><code id="source-code-content"></code></pre></div>
-      </div>
-  </div>
-
-  <div id="disclaimer">
-      <button id="disclaimer-close">&times;</button>
-      <strong>Ready</strong>
-      <p>Drop a file to start.</p>
-  </div>
-  
-  <!-- Settings Panels -->
-  <div id="camera-controls" class="settings-panel" style="right: 20px;">
-    <div class="panel-header"><div class="settings-title">Camera Control</div></div>
-    <div class="panel-content">
-      <div class="camera-mode-buttons">
-        <button class="cam-mode-btn active" data-mode="orbit">Orbit</button>
-        <button class="cam-mode-btn" data-mode="fly">Fly</button>
-        <button class="cam-mode-btn" data-mode="fps">FPS</button>
-        <button class="cam-mode-btn" data-mode="fixed">Fixed</button>
-      </div>
-      <div class="settings-slider"><label>Distance</label><input type="range" id="camDistance" min="10" max="200" value="50"></div>
-      <div class="settings-slider"><label>Speed</label><input type="range" id="camSpeed" min="0" max="2" step="0.1" value="0.5"></div>
-      <div class="settings-slider"><label>FOV (Field Of View) </label><input type="range" id="camFOV" min="30" max="120" value="75"></div>
-    </div>
-  </div>
-  
-  <div id="visualizer-params" class="settings-panel" style="right: 240px;">
-    <div class="panel-header"><div class="settings-title">Visual Parameters</div></div>
-    <div class="panel-content">
-      <div class="settings-slider"><label>Particle Size</label><input type="range" id="particleSize" min="0.1" max="5" step="0.1" value="1"></div>
-      <div class="settings-slider"><label>Color Intensity</label><input type="range" id="colorIntensity" min="0" max="2" step="0.1" value="1"></div>
-      <div class="settings-slider"><label>Bloom Strength</label><input type="range" id="bloomStrength" min="0" max="2" step="0.1" value="0.5"></div>
-      <div class="preset-buttons">
-        <button class="preset-btn" data-preset="subtle">Subtle</button>
-        <button class="preset-btn" data-preset="intense">Intense</button>
-        <button class="preset-btn" data-preset="club">Club</button>
-        <button class="preset-btn" data-preset="minimal">Minimal</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Dependencies -->
+  <!-- Modules -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
-  <!-- App Modules -->
-  <script src="js/DebugEngine.js"></script>
   <script src="js/AudioEngine.js"></script>
   <script src="js/VisualizerEngine.js"></script>
   <script src="js/RecorderEngine.js"></script>
