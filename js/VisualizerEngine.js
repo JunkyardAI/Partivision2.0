@@ -15,19 +15,17 @@ class VisualizerEngine {
         this.currentViz = 'particles';
         
         // Track state to avoid redundant updates
-        this.isVisualsVisible = null; // Start null to force first update
+        this.isVisualsVisible = null; 
         
         // Camera State
         this.camState = { mode: 'orbit', dist: 50, speed: 0.5, theta: Math.PI/4, phi: Math.PI/4, pan: new THREE.Vector3() };
-        
-        this.targetResolution = 'window'; // 'window' or {w, h}
+        this.targetResolution = 'window'; 
     }
 
     init() {
         this.scene = new THREE.Scene();
         this.scene.fog = new THREE.FogExp2(0x000000, 0.0015);
 
-        // Default camera aspect (will be fixed in resize)
         this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
         this.camera.position.set(0, 20, 50);
 
@@ -60,45 +58,29 @@ class VisualizerEngine {
 
     handleResize() {
         let w, h;
-
         if (this.targetResolution === 'window') {
             w = window.innerWidth;
             h = window.innerHeight;
             this.renderer.domElement.style.width = '100%';
             this.renderer.domElement.style.height = '100%';
-            this.renderer.domElement.style.maxWidth = 'none';
-            this.renderer.domElement.style.maxHeight = 'none';
             this.renderer.setPixelRatio(window.devicePixelRatio);
         } else {
-            // Parse "1080x1920"
             const parts = this.targetResolution.split('x');
             w = parseInt(parts[0]);
             h = parseInt(parts[1]);
-            
-            // For recording precision, use PixelRatio 1
             this.renderer.setPixelRatio(1); 
-            
-            // CSS scaling to fit viewport
             this.renderer.domElement.style.width = 'auto';
             this.renderer.domElement.style.height = 'auto';
             this.renderer.domElement.style.maxWidth = '100%';
             this.renderer.domElement.style.maxHeight = '100%';
         }
-
         this.camera.aspect = w / h;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(w, h, false); 
         this.composer.setSize(w, h);
-        
-        // If custom resolution, we manually set width/height attribs to ensure buffer size
-        if (this.targetResolution !== 'window') {
-            this.renderer.domElement.width = w;
-            this.renderer.domElement.height = h;
-        }
     }
 
     initVisuals() {
-        // Helpers to keep code clean
         const createMesh = (geo, mat) => { const m = new THREE.Mesh(geo, mat); this.scene.add(m); m.visible = false; return m; };
         const createPoints = (geo, mat) => { const p = new THREE.Points(geo, mat); this.scene.add(p); p.visible = false; return p; };
 
@@ -130,10 +112,21 @@ class VisualizerEngine {
         gg.setAttribute('color', new THREE.Float32BufferAttribute(gc, 3));
         this.visualizations.galaxy = createPoints(gg, new THREE.PointsMaterial({size:0.2, vertexColors:true, blending:THREE.AdditiveBlending}));
 
-        // 4. Terrain
-        const tg = new THREE.PlaneGeometry(80, 80, 127, 127);
-        tg.rotateX(-Math.PI/2); tg.userData.orig = tg.attributes.position.clone();
-        this.visualizations.terrain = createMesh(tg, new THREE.MeshPhongMaterial({color:0x3a86ff, emissive:0x8338ec, emissiveIntensity:0.2, wireframe:true}));
+        // 4. Hyper-Spiral (Replacement for Terrain)
+        this.visualizations.spiral = new THREE.Group();
+        const ringGeo = new THREE.TorusGeometry(10, 0.1, 8, 64);
+        for(let i=0; i<48; i++) {
+            const color = new THREE.Color().setHSL(i/48, 0.8, 0.5);
+            const mat = new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 0.5, transparent: true, opacity: 0.8 });
+            const ring = new THREE.Mesh(ringGeo, mat);
+            ring.position.z = -i * 5;
+            ring.rotation.z = i * 0.2;
+            ring.userData.baseScale = 1 + (i * 0.05);
+            ring.scale.setScalar(ring.userData.baseScale);
+            this.visualizations.spiral.add(ring);
+        }
+        this.scene.add(this.visualizations.spiral);
+        this.visualizations.spiral.visible = false;
         
         // 5. Parametric EQ
         const eg = new THREE.PlaneGeometry(100, 40, 127, 63);
@@ -157,28 +150,21 @@ class VisualizerEngine {
 
     switchVisual(name) {
         this.currentViz = name;
-        // Force update of visibility flags because the user changed the selection
         this.updateVisibilityFlags(true, true); 
     }
 
     updateVisibilityFlags(shouldBeVisible, forceUpdate = false) {
-        // PERFORMANCE FIX: Only loop if state changed OR if forced (by switchVisual)
         if (!forceUpdate && this.isVisualsVisible === shouldBeVisible) return;
-        
         this.isVisualsVisible = shouldBeVisible;
-
         for(let k in this.visualizations) {
             if(this.visualizations[k]) {
                 const targetState = shouldBeVisible ? (k === this.currentViz) : false;
-                if (this.visualizations[k].visible !== targetState) {
-                    this.visualizations[k].visible = targetState;
-                }
+                this.visualizations[k].visible = targetState;
             }
         }
     }
 
     update(freqData, params) {
-        // Camera Logic
         const t = Date.now() * 0.0001;
         const cam = this.camera;
         const cs = this.camState;
@@ -198,29 +184,18 @@ class VisualizerEngine {
             cam.position.y = 5;
             cam.position.z = Math.cos(t*cs.speed)*30;
             cam.lookAt(0,10,0);
-        } else {
-            cam.position.set(0, 30, 70);
-            cam.lookAt(0,0,0);
         }
 
-        // Update Bloom
         if (this.bloomPass) this.bloomPass.strength = params.bloom;
 
-        // PERFORMANCE FIX: 
-        // 1. Determine play state
         const isPlaying = !!freqData;
-        // 2. Call visibility updater with NO forced flag. 
-        //    This means it will instantly RETURN if state hasn't changed.
-        //    This prevents the loop from running 60 times a second.
         this.updateVisibilityFlags(isPlaying, false);
 
-        // GEOMETRY UPDATE
         if (isPlaying) {
             const len = freqData.length;
             const sensitivity = 2.0;
 
             const updateGeo = (obj, fn) => {
-                if(!obj.geometry) return;
                 const pos = obj.geometry.attributes.position;
                 const orig = obj.geometry.userData.orig.array;
                 const arr = pos.array;
@@ -233,9 +208,8 @@ class VisualizerEngine {
                 case 'particles': {
                     const p = this.visualizations.particles;
                     const c = p.geometry.attributes.color.array;
-                    const pa = p.geometry.attributes.position.array;
-                    for(let i=0; i<pa.length/3; i++) {
-                        const idx = Math.floor(i/(pa.length/3)*len*0.5);
+                    for(let i=0; i<c.length/3; i++) {
+                        const idx = Math.floor(i/(c.length/3)*len*0.5);
                         const val = freqData[idx]/255;
                         const col = new THREE.Color().setHSL(idx/(len*0.5), 1, 0.5);
                         c[i*3] = col.r * val * params.color;
@@ -257,16 +231,16 @@ class VisualizerEngine {
                     });
                     this.visualizations.sphere.rotation.y += 0.002;
                     break;
-                case 'terrain':
-                    updateGeo(this.visualizations.terrain, (arr, orig, f, s, l) => {
-                            for(let i=0; i<128; i++) {
-                                const val = f[i]/255 * s * 15;
-                                for(let j=0; j<128; j++) {
-                                    const idx = (i*128 + j)*3 + 1; // y
-                                    arr[idx] = orig[idx] + val;
-                                }
-                            }
+                case 'spiral':
+                    this.visualizations.spiral.children.forEach((ring, i) => {
+                        const idx = Math.floor((i / 48) * (len * 0.5));
+                        const val = freqData[idx] / 255;
+                        const s = ring.userData.baseScale + (val * sensitivity * 5);
+                        ring.scale.setScalar(s);
+                        ring.material.emissiveIntensity = 0.2 + (val * 5);
+                        ring.rotation.z += 0.01 + (val * 0.1);
                     });
+                    this.visualizations.spiral.position.z = (this.visualizations.spiral.position.z + 0.5) % 5;
                     break;
                 case 'galaxy':
                     const g = this.visualizations.galaxy;
@@ -280,7 +254,7 @@ class VisualizerEngine {
                     g.geometry.attributes.color.needsUpdate = true;
                     g.rotation.y += 0.001;
                     break;
-                    case 'parametricEq':
+                case 'parametricEq':
                     updateGeo(this.visualizations.parametricEq, (arr, orig, f, s, l) => {
                         for(let i=0; i<=127; i++) {
                             const idx = Math.floor(i/127 * (l*0.4));
@@ -292,7 +266,7 @@ class VisualizerEngine {
                         }
                     });
                     break;
-                    case 'crystalline':
+                case 'crystalline':
                     this.visualizations.crystalline.children.forEach((c, i) => {
                         const val = freqData[i%len]/255 * sensitivity;
                         c.scale.setScalar(1 + 3*val);
@@ -302,7 +276,6 @@ class VisualizerEngine {
                     break;
             }
         }
-        
         this.composer.render();
     }
 
