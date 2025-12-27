@@ -1,91 +1,77 @@
 /* =========================================
-   MAIN APP CONTROLLER 2.2
-   Handles Automation, Transitions, and UI Binding
+   MAIN APP CONTROLLER 2.2 PRO
+   Handles Automation, UI Updates, and Transitions
    ========================================= */
 class App {
     constructor() {
-        this.debug = new DebugEngine();
         this.audio = new AudioEngine();
         this.viz = new VisualizerEngine('stage-container');
         this.recorder = new RecorderEngine(this.audio, this.viz);
         this.ui = new UIManager(this);
         
         this.isPlaying = false;
-        this.params = { size: 1, color: 1, bloom: 0.5, fps: 60, bitcrush: 1 };
+        this.params = { size: 1, color: 1, bloom: 0.8, fps: 60, bitcrush: 1 };
         
-        // Transition System
-        this.transitionQueue = [];
-        this.isTransitioning = false;
-
-        // Automation Macros
         this.macros = {
-            sizePulse: { active: false, speed: 1.0, amplitude: 1.0 },
-            colorShift: { active: false, speed: 0.5 },
-            camOrbit: { active: false, speed: 0.5 }
+            sizeLFO: { active: false, speed: 2.0 },
+            colorCycle: { active: false, speed: 1.0 },
+            autoOrbit: { active: false, speed: 1.0 },
+            warpDrive: { active: false, intensity: 0 }
         };
-        
+
+        this.transitionQueue = [];
+        this.lastFrameTime = 0;
+
         this.viz.init();
         this.loop();
     }
 
-    queueTransition(mode, delaySeconds) {
-        this.transitionQueue.push({ mode, time: Date.now() + (delaySeconds * 1000) });
-        this.debug.log("SYSTEM", `Queued ${mode} in ${delaySeconds}s`);
+    load(file) {
+        this.audio.load(URL.createObjectURL(file));
+        this.ui.log("SYSTEM", `Loaded Ingestion: ${file.name}`);
     }
 
-    processTransitions() {
-        if (this.transitionQueue.length > 0) {
-            const next = this.transitionQueue[0];
-            if (Date.now() >= next.time) {
-                this.setVisual(next.mode);
-                this.transitionQueue.shift();
-            }
-        }
-    }
-
-    runMacros() {
-        const t = Date.now() * 0.001;
-        if (this.macros.sizePulse.active) {
-            this.params.size = 1 + Math.sin(t * this.macros.sizePulse.speed) * this.macros.sizePulse.amplitude;
-            document.getElementById('particleSize').value = this.params.size;
-        }
-        if (this.macros.camOrbit.active) {
-            this.viz.camState.theta += 0.01 * this.macros.camOrbit.speed;
-        }
+    queueTransition(mode, delay) {
+        this.ui.log("QUEUE", `Scheduling ${mode} in ${delay}s...`);
+        setTimeout(() => {
+            this.setVisual(mode);
+            this.ui.log("TRANSITION", `Executed transition to ${mode}`);
+        }, delay * 1000);
     }
 
     setVisual(mode) {
         this.viz.switchVisual(mode);
-        document.getElementById('visualMode').value = mode;
-        this.debug.log("VIZ", `Switched to ${mode}`);
+        const select = document.getElementById('visualMode');
+        if (select) select.value = mode;
     }
 
-    load(file) {
-        this.debug.log("SYSTEM", `Loading: ${file.name}`);
-        this.audio.load(URL.createObjectURL(file));
+    runMacros() {
+        const t = Date.now() * 0.001;
+        if (this.macros.sizeLFO.active) {
+            this.params.size = 1 + Math.sin(t * this.macros.sizeLFO.speed) * 2;
+            const slider = document.getElementById('particleSize');
+            if (slider) slider.value = this.params.size;
+        }
+        if (this.macros.autoOrbit.active) {
+            this.viz.camState.theta += 0.01 * this.macros.autoOrbit.speed;
+        }
+        if (this.macros.warpDrive.active) {
+            this.viz.camState.dist = 50 + Math.sin(t * 3) * 25;
+        }
     }
-
-    play() { this.audio.play(); this.isPlaying = true; }
-    pause() { this.audio.pause(); this.isPlaying = false; }
 
     loop() {
-        // Capped FPS Logic
-        const interval = 1000 / this.params.fps;
         const now = Date.now();
-        if (!this.lastFrameTime) this.lastFrameTime = now;
+        const interval = 1000 / this.params.fps;
         
-        const delta = now - this.lastFrameTime;
-
-        if (delta >= interval) {
-            this.lastFrameTime = now - (delta % interval);
-            
+        if (now - this.lastFrameTime >= interval) {
+            this.lastFrameTime = now;
             this.runMacros();
-            this.processTransitions();
-
+            
             const data = this.isPlaying ? this.audio.getFrequencyData() : null;
             this.viz.update(data, this.params);
             
-            if (this.ui) this.ui.updateStatus();
+            this.ui.updateStatus(this.audio.getCurrentTime(), this.audio.getDuration());
         }
         
         requestAnimationFrame(() => this.loop());
