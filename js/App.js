@@ -14,26 +14,30 @@ class App {
         // Automation Engine (Macros)
         this.macros = {
             sizeLFO: { active: false, speed: 2.0 },
-            autoOrbit: { active: false, speed: 0.5 },
+            autoOrbit: { active: false, speed: 1.0 },
             warpDrive: { active: false, intensity: 0 }
         };
 
         this.lastFrameTime = 0;
         this.viz.init();
+        
+        // Sync bitcrush and fps on load
+        this.viz.setBitcrush(this.params.bitcrush);
+        
         this.loop();
     }
 
     load(file) {
         if (!file) return;
         this.audio.load(URL.createObjectURL(file));
-        this.ui.log("SYSTEM", `Data Ingestion: ${file.name}`);
+        this.ui.log("DAEMON", `Ingesting Data Stream: ${file.name}`);
     }
 
     queueTransition(mode, delay) {
-        this.ui.log("QUEUE", `Scheduling transition to ${mode} in ${delay}s...`);
+        this.ui.log("PIPELINE", `Queueing ${mode} transition in ${delay}s...`);
         setTimeout(() => {
             this.setVisual(mode);
-            this.ui.log("PIPELINE", `Executed transition: ${mode}`);
+            this.ui.log("DAEMON", `Successfully Transitioned to ${mode}`);
         }, delay * 1000);
     }
 
@@ -54,7 +58,7 @@ class App {
             this.viz.camState.theta += 0.01 * this.macros.autoOrbit.speed;
         }
         if (this.macros.warpDrive.active) {
-            this.viz.camState.dist = 50 + Math.sin(t * 3) * 25;
+            this.viz.camState.dist = 60 + Math.sin(t * 4) * 30;
         }
     }
 
@@ -70,7 +74,7 @@ class App {
             const data = this.isPlaying ? this.audio.getFrequencyData() : null;
             this.viz.update(data, this.params);
             
-            this.ui.updateStatus(this.audio.getCurrentTime(), this.audio.getDuration());
+            this.ui.updateTelemetry(this.audio.getCurrentTime(), this.audio.getDuration());
         }
         
         requestAnimationFrame(() => this.loop());
