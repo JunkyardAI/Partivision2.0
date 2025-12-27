@@ -4,10 +4,11 @@
    ========================================= */
 class AudioEngine {
     constructor() {
+        // Initialize Context immediately to prevent startup null crashes
         this.context = new (window.AudioContext || window.webkitAudioContext)();
         this.analyser = this.context.createAnalyser();
         this.analyser.fftSize = 2048;
-        // Smoothing constant: 0.85 is standard, 0.9 is very smooth
+        // Smoothing constant: 0.85 for fluid but reactive flow
         this.analyser.smoothingTimeConstant = 0.85; 
         this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
         this.recordingDest = this.context.createMediaStreamDestination();
@@ -22,30 +23,21 @@ class AudioEngine {
         this.onLoaded = null;
     }
 
-    // Removed init() as it is now in constructor. 
-    // Kept for compatibility if called, but does nothing.
-    init() {}
-
     load(blobUrl) {
-        // Cleanup old element
         if (this.audioElement) {
             this.audioElement.pause();
             this.audioElement.src = '';
-            this.audioElement.load(); // Force release
+            this.audioElement.load();
         }
 
         this.audioElement = new Audio(blobUrl);
         this.audioElement.crossOrigin = "anonymous";
         
-        // Disconnect old source if it exists
         if (this.source) {
             try { this.source.disconnect(); } catch(e) {}
         }
         
-        // Create new source
         this.source = this.context.createMediaElementSource(this.audioElement);
-        
-        // Connect graph
         this.source.connect(this.analyser);
         this.analyser.connect(this.context.destination);
         this.source.connect(this.recordingDest);
@@ -57,24 +49,18 @@ class AudioEngine {
         this.audioElement.addEventListener('timeupdate', () => { if(this.onTimeUpdate) this.onTimeUpdate(); });
         this.audioElement.addEventListener('ended', () => { if(this.onEnded) this.onEnded(); });
         this.audioElement.addEventListener('error', (e) => { 
-            console.error("Audio Element Error", e);
+            console.error("Audio Error", e);
             if(this.onError) this.onError(e); 
         });
     }
 
     play() {
         if (!this.audioElement) return;
+        if (this.context.state === 'suspended') this.context.resume();
         
-        // Always try to resume context (browser autoplay policy)
-        if (this.context.state === 'suspended') {
-            this.context.resume();
-        }
-
         const playPromise = this.audioElement.play();
         if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.warn("Auto-play prevented. User interaction required.", error);
-            });
+            playPromise.catch(error => console.warn("Autoplay blocked", error));
         }
     }
 
@@ -98,9 +84,7 @@ class AudioEngine {
     }
 
     getFrequencyData() {
-        if (this.analyser) {
-            this.analyser.getByteFrequencyData(this.frequencyData);
-        }
+        if (this.analyser) this.analyser.getByteFrequencyData(this.frequencyData);
         return this.frequencyData;
     }
 
