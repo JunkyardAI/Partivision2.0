@@ -1,69 +1,307 @@
-/* --- PARTIVISION PRO THEME --- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
+/* === PARTIVISION 2.0 — FULL UI STYLESHEET === */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
 :root {
   --neon: #00ffff;
   --accent: #ff00ff;
-  --bg-glass: rgba(8, 8, 12, 0.9);
-  --border-glass: rgba(255, 255, 255, 0.1);
+  --bg-main: #000;
+  --bg-glass: rgba(8, 8, 12, 0.92);
+  --bg-panel: rgba(12, 12, 18, 0.88);
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --text-dim: #666;
+  --text-mid: #aaa;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+/* ===== RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-#stage-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+html, body {
+  width: 100%;
+  height: 100%;
+}
 
-.glass-panel { background: var(--bg-glass); backdrop-filter: blur(25px); border: 1px solid var(--border-glass); border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+body {
+  background: var(--bg-main);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
 
-/* Presentation Header */
-#header { position: absolute; top: 0; left: 0; width: 100%; z-index: 1000; padding: 30px 40px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
-#header * { pointer-events: all; }
-.logo h1 { font-size: 24px; font-weight: 700; letter-spacing: 6px; color: var(--neon); text-transform: uppercase; }
-.logo h1 span { color: var(--accent); font-size: 14px; vertical-align: super; margin-left: 5px; }
-.tagline { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 3px; margin-top: 5px; }
+/* ===== THREE.JS STAGE ===== */
+#stage-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
 
-/* Command Center HUD */
+canvas {
+  display: block;
+}
+
+/* ===== GLASS PANEL BASE ===== */
+.glass-panel {
+  background: var(--bg-glass);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+/* ===== HEADER ===== */
+#header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  padding: 28px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+#header * {
+  pointer-events: all;
+}
+
+.logo h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--neon);
+  text-transform: uppercase;
+}
+
+.logo h1 span {
+  color: var(--accent);
+  font-size: 12px;
+  vertical-align: super;
+  margin-left: 6px;
+}
+
+.tagline {
+  margin-top: 6px;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #555;
+  text-transform: uppercase;
+}
+
+/* ===== COMMAND CENTER ===== */
 #command-center {
-  position: absolute; right: 20px; top: 100px; width: 340px; 
-  bottom: 120px; z-index: 1000; padding: 25px;
-  display: flex; flex-direction: column; gap: 25px;
-  overflow-y: auto; scrollbar-width: none; transition: 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+  position: fixed;
+  top: 110px;
+  right: 24px;
+  bottom: 130px;
+  width: 360px;
+  z-index: 1000;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  background: var(--bg-panel);
+  border-radius: 22px;
+  border: 1px solid var(--border-glass);
 }
+
 #command-center::-webkit-scrollbar { display: none; }
 
-.panel-section h3 { font-size: 10px; font-weight: 700; color: #555; letter-spacing: 2px; margin-bottom: 15px; border-bottom: 1px solid var(--border-glass); padding-bottom: 5px; text-transform: uppercase; }
+.panel-section h3 {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-glass);
+}
 
-#console-logs { height: 140px; background: rgba(0,0,0,0.6); border-radius: 10px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 10px; overflow-y: auto; color: #888; border: 1px solid rgba(255,255,255,0.05); line-height: 1.5; }
+/* ===== LOG CONSOLE ===== */
+#console-logs {
+  height: 150px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.65);
+  border: 1px solid rgba(255,255,255,0.06);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  line-height: 1.6;
+  color: #888;
+  overflow-y: auto;
+}
+
 .log-time { color: #444; }
-.log-source { color: var(--neon); font-weight: bold; }
+.log-source { color: var(--neon); font-weight: 600; }
 
-.status-bar { display: flex; justify-content: space-between; font-size: 9px; color: #444; margin-top: 8px; font-family: 'JetBrains Mono'; }
+.status-bar {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #444;
+}
 
-.control-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 12px; }
-.control-row label { color: #aaa; }
-input[type="range"] { accent-color: var(--neon); width: 160px; height: 4px; border-radius: 2px; }
+/* ===== CONTROLS ===== */
+.control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 11px;
+}
 
-select, button { background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; transition: 0.2s; }
-button:hover { background: rgba(255,255,255,0.1); border-color: var(--neon); }
+.control-row label {
+  color: var(--text-mid);
+}
 
-.macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.macro-btn, .trans-btn { transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); color: #777; font-weight: bold; }
-.macro-btn.active { border-color: var(--neon); color: var(--neon); background: rgba(0,255,255,0.1); box-shadow: 0 0 10px rgba(0,255,255,0.1); }
+input[type="range"] {
+  width: 170px;
+  height: 4px;
+  accent-color: var(--neon);
+}
 
-/* Transport Control */
-#transport-bar { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: calc(100% - 400px); max-width: 900px; z-index: 1000; transition: 0.4s; }
-.transport-inner { padding: 15px 30px; display: flex; align-items: center; gap: 25px; border-radius: 50px; }
+select, button {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-glass);
+  color: #fff;
+  padding: 6px 14px;
+  font-size: 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
-.scrubber { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
-#timeDisplay { font-size: 10px; font-family: 'JetBrains Mono'; color: var(--neon); letter-spacing: 1px; }
-#progressBar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative; }
-#progressFill { height: 100%; background: linear-gradient(90deg, var(--neon), var(--accent)); width: 0%; border-radius: 2px; transition: width 0.1s linear; }
+button:hover {
+  border-color: var(--neon);
+  background: rgba(255,255,255,0.12);
+}
 
-.play-btn, .pause-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-.play-btn:disabled { opacity: 0.3; }
+/* ===== MACROS ===== */
+.macro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
 
-/* Global State */
-body.ui-hidden #command-center, body.ui-hidden #header, body.ui-hidden #transport-bar { opacity: 0; pointer-events: none; transform: translateY(20px); }
+.macro-btn,
+.trans-btn {
+  padding: 10px;
+  font-weight: 600;
+  font-size: 10px;
+  color: #777;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: all 0.2s ease;
+}
 
-#drop-overlay { position: fixed; inset: 0; background: rgba(0,255,255,0.05); z-index: 2000; display: flex; align-items: center; justify-content: center; font-size: 24px; letter-spacing: 12px; color: var(--neon); opacity: 0; pointer-events: none; transition: 0.3s; font-weight: 700; }
-#drop-overlay.active { opacity: 1; pointer-events: all; backdrop-filter: blur(10px); }
+.macro-btn.active {
+  color: var(--neon);
+  border-color: var(--neon);
+  background: rgba(0,255,255,0.1);
+  box-shadow: 0 0 14px rgba(0,255,255,0.15);
+}
+
+/* ===== TRANSPORT BAR ===== */
+#transport-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  width: calc(100% - 420px);
+  max-width: 920px;
+  z-index: 1000;
+}
+
+.transport-inner {
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  border-radius: 50px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glass);
+}
+
+.scrubber {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#timeDisplay {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--neon);
+}
+
+#progressBar {
+  height: 4px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+#progressFill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--neon), var(--accent));
+  border-radius: 2px;
+}
+
+.play-btn,
+.pause-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-btn:disabled { opacity: 0.35; }
+
+/* ===== UI HIDE MODE ===== */
+body.ui-hidden #command-center,
+body.ui-hidden #header,
+body.ui-hidden #transport-bar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+}
+
+/* ===== DROP OVERLAY ===== */
+#drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 12px;
+  color: var(--neon);
+  background: rgba(0,255,255,0.06);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#drop-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
