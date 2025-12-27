@@ -1,4 +1,4 @@
-/* === PARTIVISION 2.0 — FULL UI STYLESHEET === */
+/* === PARTIVISION 2.0 — FULL UI STYLESHEET (UPDATED) === */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
 :root {
@@ -58,11 +58,12 @@ canvas {
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 1000;
-  padding: 28px 40px;
+  height: 96px;
+  z-index: 1500;
+  padding: 24px 40px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   pointer-events: none;
 }
 
@@ -96,11 +97,11 @@ canvas {
 /* ===== COMMAND CENTER ===== */
 #command-center {
   position: fixed;
-  top: 110px;
+  top: 120px;
   right: 24px;
   bottom: 130px;
   width: 360px;
-  z-index: 1000;
+  z-index: 1200;
   padding: 26px;
   display: flex;
   flex-direction: column;
@@ -125,18 +126,34 @@ canvas {
   border-bottom: 1px solid var(--border-glass);
 }
 
+/* ===== FLOATING SETTINGS PANELS ===== */
+.settings-panel {
+  position: fixed;
+  top: 140px;
+  width: 260px;
+  z-index: 1200;
+  padding: 18px;
+  background: var(--bg-panel);
+  border-radius: 18px;
+  border: 1px solid var(--border-glass);
+}
+
+#camera-controls { right: 24px; }
+#visualizer-params { right: 300px; }
+
 /* ===== LOG CONSOLE ===== */
 #console-logs {
-  height: 150px;
-  padding: 14px;
-  border-radius: 12px;
-  background: rgba(0,0,0,0.65);
-  border: 1px solid rgba(255,255,255,0.06);
+  height: 140px;
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 12px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 10px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  line-height: 1.6;
-  color: #888;
-  overflow-y: auto;
+  line-height: 1.45;
+  color: #9aa;
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .log-time { color: #444; }
@@ -219,7 +236,7 @@ button:hover {
   transform: translateX(-50%);
   width: calc(100% - 420px);
   max-width: 920px;
-  z-index: 1000;
+  z-index: 1200;
 }
 
 .transport-inner {
@@ -276,7 +293,8 @@ button:hover {
 /* ===== UI HIDE MODE ===== */
 body.ui-hidden #command-center,
 body.ui-hidden #header,
-body.ui-hidden #transport-bar {
+body.ui-hidden #transport-bar,
+body.ui-hidden .settings-panel {
   opacity: 0;
   pointer-events: none;
   transform: translateY(20px);
