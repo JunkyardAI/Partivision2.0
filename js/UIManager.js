@@ -1,10 +1,14 @@
 /* =========================================
    MODULE: UI MANAGER
    Handles DOM Interactions, Hotkeys, and Help
+   FIXED / HARDENED VERSION
    ========================================= */
+
 class UIManager {
     constructor(app) {
         this.app = app;
+
+        /* ---------- DOM CACHE (NULL-SAFE) ---------- */
         this.dom = {
             file: document.getElementById('audioFile'),
             play: document.getElementById('playBtn'),
@@ -12,8 +16,8 @@ class UIManager {
             record: document.getElementById('recordBtn'),
             snap: document.getElementById('snapshotBtn'),
             hideUi: document.getElementById('hideUiBtn'),
-            help: document.getElementById('helpBtn'), 
-            helpOverlay: document.getElementById('help-overlay'), 
+            help: document.getElementById('helpBtn'),
+            helpOverlay: document.getElementById('help-overlay'),
             closeHelp: document.getElementById('closeHelpBtn'),
             canvasSize: document.getElementById('canvasSize'),
             visualMode: document.getElementById('visualMode'),
@@ -25,7 +29,7 @@ class UIManager {
             drop: document.getElementById('drop-overlay'),
             panels: document.querySelectorAll('.settings-panel'),
             playbackControls: document.getElementById('playback-controls'),
-            clearFileBtn: document.getElementById('clearFileBtn')
+            clearFileBtn: document.getElementById('clearFileBtn'),
         };
 
         this.bindEvents();
@@ -33,115 +37,193 @@ class UIManager {
         this.setupDraggables();
     }
 
+    /* =========================================
+       EVENTS
+       ========================================= */
     bindEvents() {
-        this.dom.file.addEventListener('change', e => this.app.load(e.target.files[0]));
-        this.dom.play.addEventListener('click', () => this.app.play());
-        this.dom.pause.addEventListener('click', () => this.app.pause());
-        this.dom.bar.addEventListener('click', e => {
-            const r = this.dom.bar.getBoundingClientRect();
-            this.app.seek((e.clientX - r.left)/r.width);
-        });
-        
-        this.dom.record.addEventListener('click', () => {
-            this.app.toggleRecord();
-            this.dom.record.classList.toggle('recording', this.app.recorder.isRecording);
-        });
-        this.dom.snap.addEventListener('click', () => this.app.snapshot());
+        const d = this.dom;
 
-        this.dom.hideUi.addEventListener('click', () => document.body.classList.toggle('ui-hidden'));
-        this.dom.help.addEventListener('click', () => this.dom.helpOverlay.classList.add('active'));
-        this.dom.closeHelp.addEventListener('click', () => this.dom.helpOverlay.classList.remove('active'));
-
-        this.dom.canvasSize.addEventListener('change', e => this.app.setResolution(e.target.value));
-        this.dom.visualMode.addEventListener('change', e => this.app.setVisual(e.target.value));
-        this.dom.fftSize.addEventListener('change', e => this.app.setFFT(parseInt(e.target.value)));
-        
-        // Settings Sliders
-        document.getElementById('volume').addEventListener('input', e => {
-            this.app.audio.setVolume(e.target.value);
-            document.getElementById('vol-val').textContent = e.target.value + '%';
-        });
-        ['particleSize','colorIntensity','bloomStrength'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => this.app.updateParams()); 
-        });
-        document.querySelectorAll('.preset-btn').forEach(b => {
-            b.addEventListener('click', () => this.applyPreset(b.dataset.preset)); 
+        d.file?.addEventListener('change', e => {
+            const file = e.target.files?.[0];
+            if (file) this.app.load(file);
         });
 
-        // Camera Controls
-        document.querySelectorAll('.cam-mode-btn').forEach(b => {
-            b.addEventListener('click', () => {
+        d.play?.addEventListener('click', () => this.app.play());
+        d.pause?.addEventListener('click', () => this.app.pause());
+
+        d.bar?.addEventListener('click', e => {
+            const r = d.bar.getBoundingClientRect();
+            const pct = (e.clientX - r.left) / r.width;
+            this.app.seek(Math.min(Math.max(pct, 0), 1));
+        });
+
+        d.record?.addEventListener('click', () => {
+            this.app.toggleRecord?.();
+            if (this.app.recorder) {
+                d.record.classList.toggle('recording', this.app.recorder.isRecording);
+            }
+        });
+
+        d.snap?.addEventListener('click', () => this.app.snapshot?.());
+        d.hideUi?.addEventListener('click', () => document.body.classList.toggle('ui-hidden'));
+
+        d.help?.addEventListener('click', () => d.helpOverlay?.classList.add('active'));
+        d.closeHelp?.addEventListener('click', () => d.helpOverlay?.classList.remove('active'));
+
+        d.canvasSize?.addEventListener('change', e => this.app.setResolution?.(e.target.value));
+        d.visualMode?.addEventListener('change', e => this.app.setVisual?.(e.target.value));
+        d.fftSize?.addEventListener('change', e => this.app.setFFT?.(Number(e.target.value)));
+
+        /* ---------- SETTINGS ---------- */
+        const vol = document.getElementById('volume');
+        vol?.addEventListener('input', e => {
+            this.app.audio?.setVolume?.(Number(e.target.value));
+            const label = document.getElementById('vol-val');
+            if (label) label.textContent = `${e.target.value}%`;
+        });
+
+        ['particleSize', 'colorIntensity', 'bloomStrength'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', () => this.app.updateParams?.());
+        });
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.applyPreset(btn.dataset.preset));
+        });
+
+        /* ---------- CAMERA ---------- */
+        document.querySelectorAll('.cam-mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
                 document.querySelectorAll('.cam-mode-btn').forEach(x => x.classList.remove('active'));
-                b.classList.add('active');
-                this.app.viz.camState.mode = b.dataset.mode;
+                btn.classList.add('active');
+                if (this.app.viz?.camState) this.app.viz.camState.mode = btn.dataset.mode;
             });
         });
-        ['camDistance','camSpeed'].forEach(id => {
-            document.getElementById(id).addEventListener('input', e => {
-                const k = id === 'camDistance' ? 'dist' : 'speed';
-                this.app.viz.camState[k] = parseFloat(e.target.value);
+
+        ['camDistance', 'camSpeed'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', e => {
+                if (!this.app.viz?.camState) return;
+                const key = id === 'camDistance' ? 'dist' : 'speed';
+                this.app.viz.camState[key] = Number(e.target.value);
             });
         });
-        document.getElementById('camFOV').addEventListener('input', e => {
-            this.app.viz.camera.fov = parseFloat(e.target.value);
-            this.app.viz.camera.updateProjectionMatrix();
+
+        document.getElementById('camFOV')?.addEventListener('input', e => {
+            const cam = this.app.viz?.camera;
+            if (!cam) return;
+            cam.fov = Number(e.target.value);
+            cam.updateProjectionMatrix();
         });
-        
-        // Window Resize
-        window.addEventListener('resize', () => this.app.viz.handleResize());
+
+        window.addEventListener('resize', () => this.app.viz?.handleResize?.());
     }
 
+    /* =========================================
+       HOTKEYS
+       ========================================= */
     setupHotkeys() {
-        window.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT') return;
+        window.addEventListener('keydown', e => {
+            if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
-            switch(e.key.toLowerCase()) {
-                case ' ': e.preventDefault(); this.app.isPlaying ? this.app.pause() : this.app.play(); break;
-                case 'h': document.body.classList.toggle('ui-hidden'); break;
-                case 'd': case '`': // Macros Toggle
-                    const console = this.app.debug.dom.container;
-                    console.style.display = console.style.display === 'none' ? 'flex' : 'none';
+            switch (e.key.toLowerCase()) {
+                case ' ':
+                    e.preventDefault();
+                    this.app.isPlaying ? this.app.pause() : this.app.play();
                     break;
-                case 'r': this.dom.record.click(); break;
-                case 's': this.app.snapshot(); break;
-                case 'escape':
+                case 'h':
+                    document.body.classList.toggle('ui-hidden');
+                    break;
+                case 'd':
+                case '`': {
+                    const dbg = this.app.debug?.dom?.container;
+                    if (dbg) dbg.style.display = dbg.style.display === 'none' ? 'flex' : 'none';
+                    break;
+                }
+                case 'r':
+                    this.dom.record?.click();
+                    break;
+                case 's':
+                    this.app.snapshot?.();
+                    break;
+                case 'escape': {
                     document.body.classList.remove('ui-hidden');
-                    this.dom.helpOverlay.classList.remove('active');
-                    this.app.debug.dom.container.style.display = 'flex'; // Emergency console show
+                    this.dom.helpOverlay?.classList.remove('active');
+                    const dbg = this.app.debug?.dom?.container;
+                    if (dbg) dbg.style.display = 'flex';
                     break;
-                case '/': case '?':
-                    this.dom.helpOverlay.classList.toggle('active');
+                }
+                case '/':
+                case '?':
+                    this.dom.helpOverlay?.classList.toggle('active');
                     break;
             }
         });
     }
 
+    /* =========================================
+       DRAGGABLE PANELS
+       ========================================= */
     setupDraggables() {
-        const makeDrag = (el) => {
-            const h = el.querySelector('.panel-header');
-            let isD = false, ox, oy;
-            h.addEventListener('mousedown', e => { isD=true; ox=e.clientX-el.offsetLeft; oy=e.clientY-el.offsetTop; el.style.transition='none'; });
-            window.addEventListener('mousemove', e => {
-                if(!isD) return;
-                el.style.left = (e.clientX-ox)+'px'; el.style.top = (e.clientY-oy)+'px';
+        const makeDrag = panel => {
+            const header = panel.querySelector('.panel-header');
+            if (!header) return;
+
+            let dragging = false;
+            let ox = 0, oy = 0;
+
+            header.addEventListener('mousedown', e => {
+                dragging = true;
+                ox = e.clientX - panel.offsetLeft;
+                oy = e.clientY - panel.offsetTop;
+                panel.style.transition = 'none';
             });
-            window.addEventListener('mouseup', () => { if(isD) el.style.transition=''; isD=false; });
+
+            window.addEventListener('mousemove', e => {
+                if (!dragging) return;
+                panel.style.left = `${e.clientX - ox}px`;
+                panel.style.top = `${e.clientY - oy}px`;
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (!dragging) return;
+                dragging = false;
+                panel.style.transition = '';
+            });
         };
+
         this.dom.panels.forEach(makeDrag);
     }
 
-    updateProgress(curr, dur) {
-        const pct = dur > 0 ? (curr/dur)*100 : 0;
-        this.dom.progress.style.width = pct + '%';
-        const fmt = s => `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
+    /* =========================================
+       UI UPDATES
+       ========================================= */
+    updateProgress(curr = 0, dur = 0) {
+        if (!this.dom.progress || !this.dom.time) return;
+
+        const pct = dur > 0 ? (curr / dur) * 100 : 0;
+        this.dom.progress.style.width = `${pct}%`;
+
+        const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
         this.dom.time.textContent = `${fmt(curr)} / ${fmt(dur)}`;
     }
-    
-    applyPreset(p) {
-        const d = { subtle: {p:0.5, c:0.8, b:0.3}, intense: {p:2,c:1.5,b:1.2}, club: {p:1.5,c:1.2,b:0.8}, minimal: {p:0.8,c:0.5,b:0.1} }[p];
-        if(d) {
-            document.getElementById("particleSize").value=d.p; document.getElementById("colorIntensity").value=d.c; document.getElementById("bloomStrength").value=d.b;
-            this.app.updateParams();
-        }
+
+    /* =========================================
+       PRESETS
+       ========================================= */
+    applyPreset(name) {
+        const presets = {
+            subtle: { p: 0.5, c: 0.8, b: 0.3 },
+            intense: { p: 2, c: 1.5, b: 1.2 },
+            club: { p: 1.5, c: 1.2, b: 0.8 },
+            minimal: { p: 0.8, c: 0.5, b: 0.1 }
+        };
+
+        const preset = presets[name];
+        if (!preset) return;
+
+        document.getElementById('particleSize').value = preset.p;
+        document.getElementById('colorIntensity').value = preset.c;
+        document.getElementById('bloomStrength').value = preset.b;
+
+        this.app.updateParams?.();
     }
 }
