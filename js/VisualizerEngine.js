@@ -1,47 +1,35 @@
 /* =========================================
-   MODULE: VISUALIZER ENGINE (FIXED)
-   Handles Three.js Scene, Camera, Rendering, and Resizing
+   MODULE: VISUALIZER ENGINE
+   Optimized for switching and play states
    ========================================= */
 class VisualizerEngine {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
-        this.scene = null;
-        this.camera = null;
-        this.renderer = null;
-        this.composer = null;
-        this.bloomPass = null;
-        
-        this.visualizations = {};
-        this.currentViz = 'particles';
-        
-        this.isVisualsVisible = null; 
-        this.bitcrush = 1;
-        
-        // Camera State
-        this.camState = { mode: 'orbit', dist: 60, speed: 0.5, theta: Math.PI/4, phi: Math.PI/4, pan: new THREE.Vector3() };
-        this.targetResolution = 'window'; 
+        this.scene = null; this.camera = null; this.renderer = null;
+        this.composer = null; this.bloomPass = null;
+        this.visualizations = {}; this.currentViz = 'particles';
+        this.isVisualsVisible = null;
+        this.camState = { mode: 'orbit', dist: 50, speed: 0.5, theta: Math.PI/4, phi: Math.PI/4, pan: new THREE.Vector3() };
+        this.targetResolution = 'window';
     }
 
     init() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x020205);
-        this.scene.fog = new THREE.FogExp2(0x000000, 0.0012);
-
-        this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 3000);
-        this.camera.position.set(0, 20, 60);
+        this.scene.fog = new THREE.FogExp2(0x000000, 0.0015);
+        this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        this.camera.position.set(0, 20, 50);
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.container.appendChild(this.renderer.domElement);
 
-        this.scene.add(new THREE.AmbientLight(0x202020, 0.5));
-        const l1 = new THREE.PointLight(0x00ffff, 2, 200); l1.position.set(50,50,50); this.scene.add(l1);
-        const l2 = new THREE.PointLight(0xffaa00, 2, 200); l2.position.set(-50,-50,-50); this.scene.add(l2);
+        this.scene.add(new THREE.AmbientLight(0x404040, 0.5));
+        const l1 = new THREE.PointLight(0x00ffff, 1, 150); l1.position.set(0,30,30); this.scene.add(l1);
+        const l2 = new THREE.PointLight(0xff00ff, 1, 150); l2.position.set(0,30,-30); this.scene.add(l2);
 
         const renderScene = new THREE.RenderPass(this.scene, this.camera);
         this.bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        this.bloomPass.strength = 0.8; 
-        
+        this.bloomPass.strength = 0.5; this.bloomPass.radius = 0; this.bloomPass.threshold = 0;
         this.composer = new THREE.EffectComposer(this.renderer);
         this.composer.addPass(renderScene);
         this.composer.addPass(this.bloomPass);
@@ -50,108 +38,77 @@ class VisualizerEngine {
         this.handleResize();
     }
 
-    // FIXED: Added missing bitcrush method for resolution downscaling
-    setBitcrush(val) {
-        this.bitcrush = val || 1;
-        this.handleResize();
-    }
-
-    setResolution(mode) {
-        this.targetResolution = mode;
-        this.handleResize();
-    }
+    setResolution(mode) { this.targetResolution = mode; this.handleResize(); }
 
     handleResize() {
-        if (!this.renderer) return;
-        
-        const crunch = this.bitcrush || 1;
         let w, h;
-        
         if (this.targetResolution === 'window') {
-            w = window.innerWidth / crunch; 
-            h = window.innerHeight / crunch;
-            this.renderer.domElement.style.width = '100%';
-            this.renderer.domElement.style.height = '100%';
+            w = window.innerWidth; h = window.innerHeight;
             this.renderer.setPixelRatio(window.devicePixelRatio);
         } else {
             const parts = this.targetResolution.split('x');
-            w = parseInt(parts[0]) / crunch; 
-            h = parseInt(parts[1]) / crunch;
+            w = parseInt(parts[0]); h = parseInt(parts[1]);
             this.renderer.setPixelRatio(1); 
-            this.renderer.domElement.style.width = 'auto';
-            this.renderer.domElement.style.height = 'auto';
-            this.renderer.domElement.style.maxWidth = '100%';
-            this.renderer.domElement.style.maxHeight = '100%';
         }
-        
-        this.camera.aspect = (w * crunch) / (h * crunch);
+        this.camera.aspect = w / h;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(w * crunch, h * crunch, false); 
-        this.composer.setSize(w * crunch, h * crunch);
+        this.renderer.setSize(w, h, false); 
+        this.composer.setSize(w, h);
     }
 
     initVisuals() {
         const createMesh = (geo, mat) => { const m = new THREE.Mesh(geo, mat); this.scene.add(m); m.visible = false; return m; };
         const createPoints = (geo, mat) => { const p = new THREE.Points(geo, mat); this.scene.add(p); p.visible = false; return p; };
 
-        // 1. Particles
+        // Particles
         const pg = new THREE.BufferGeometry();
         const pos = []; const cols = [];
-        for(let i=0; i<8000; i++) {
-            pos.push((Math.random()-0.5)*120, (Math.random()-0.5)*120, (Math.random()-0.5)*120);
-            cols.push(1,1,1);
-        }
+        for(let i=0; i<8000; i++) { pos.push((Math.random()-0.5)*100, (Math.random()-0.5)*100, (Math.random()-0.5)*100); cols.push(1,1,1); }
         pg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
         pg.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
-        this.visualizations.particles = createPoints(pg, new THREE.PointsMaterial({size:0.4, vertexColors:true, blending:THREE.AdditiveBlending, depthWrite:false}));
+        this.visualizations.particles = createPoints(pg, new THREE.PointsMaterial({size:0.5, vertexColors:true, blending:THREE.AdditiveBlending, depthWrite:false}));
 
-        // 2. Sphere
+        // Sphere
         const sg = new THREE.IcosahedronGeometry(15, 5);
         sg.userData.orig = sg.attributes.position.clone();
-        this.visualizations.sphere = createMesh(sg, new THREE.MeshPhongMaterial({color:0x00ffff, emissive:0xff00ff, emissiveIntensity:0.2, wireframe:true}));
+        this.visualizations.sphere = createMesh(sg, new THREE.MeshPhongMaterial({color:0x00ffff, emissive:0xff00ff, emissiveIntensity:0.1, wireframe:true}));
 
-        // 3. Galaxy
+        // Galaxy
         const gg = new THREE.BufferGeometry();
         const gp = []; const gc = [];
-        for(let i=0; i<15000; i++) {
-            const r = Math.random()*60; const th = Math.random()*Math.PI*2;
-            gp.push(Math.cos(th)*r, (Math.random()-0.5)*8, Math.sin(th)*r);
-            gc.push(1,1,1);
-        }
+        for(let i=0; i<10000; i++) { const r = Math.random()*50; const th = Math.random()*Math.PI*2; gp.push(Math.cos(th)*r, (Math.random()-0.5)*5, Math.sin(th)*r); gc.push(1,1,1); }
         gg.setAttribute('position', new THREE.Float32BufferAttribute(gp, 3));
         gg.setAttribute('color', new THREE.Float32BufferAttribute(gc, 3));
-        this.visualizations.galaxy = createPoints(gg, new THREE.PointsMaterial({size:0.15, vertexColors:true, blending:THREE.AdditiveBlending}));
+        this.visualizations.galaxy = createPoints(gg, new THREE.PointsMaterial({size:0.2, vertexColors:true, blending:THREE.AdditiveBlending}));
 
-        // 4. Stellar Core
-        const starGeo = new THREE.IcosahedronGeometry(18, 6);
-        starGeo.userData.orig = starGeo.attributes.position.clone();
-        const starColors = new Float32Array(starGeo.attributes.position.count * 3);
-        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-        this.visualizations.star = createMesh(starGeo, new THREE.MeshStandardMaterial({
-            vertexColors: true, metalness: 0.2, roughness: 0.8, emissive: 0xffffff, emissiveIntensity: 1.0
-        }));
-
-        // 5. Parametric EQ
-        const eg = new THREE.PlaneGeometry(120, 50, 127, 63);
+        // Terrain
+        const tg = new THREE.PlaneGeometry(80, 80, 127, 127);
+        tg.rotateX(-Math.PI/2); tg.userData.orig = tg.attributes.position.clone();
+        this.visualizations.terrain = createMesh(tg, new THREE.MeshPhongMaterial({color:0x3a86ff, emissive:0x8338ec, emissiveIntensity:0.2, wireframe:true}));
+        
+        // Parametric EQ
+        const eg = new THREE.PlaneGeometry(100, 40, 127, 63);
         eg.rotateX(-Math.PI/2); eg.userData.orig = eg.attributes.position.clone();
-        this.visualizations.parametricEq = createMesh(eg, new THREE.MeshPhongMaterial({color:0x06ffa5, emissive:0x3a86ff, emissiveIntensity:0.3, wireframe:true}));
+        this.visualizations.parametricEq = createMesh(eg, new THREE.MeshPhongMaterial({color:0x06ffa5, emissive:0x3a86ff, emissiveIntensity:0.2, wireframe:true}));
 
-        // 6. Crystalline
+        // Crystalline
         this.visualizations.crystalline = new THREE.Group();
-        const cg = new THREE.BoxGeometry(1.5,1.5,1.5);
-        for(let i=0; i<80; i++){
-            const m = new THREE.Mesh(cg, new THREE.MeshPhongMaterial({color:0xffffff, transparent:true, opacity:0.6}));
-            m.position.set((Math.random()-0.5)*80, (Math.random()-0.5)*80, (Math.random()-0.5)*80);
-            m.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+        const cg = new THREE.BoxGeometry(1,1,1);
+        for(let i=0; i<64; i++){
+            const m = new THREE.Mesh(cg, new THREE.MeshPhongMaterial({color:0xffffff, transparent:true, opacity:0.7}));
+            m.position.set((Math.random()-0.5)*60, (Math.random()-0.5)*60, (Math.random()-0.5)*60);
+            m.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
             this.visualizations.crystalline.add(m);
         }
         this.scene.add(this.visualizations.crystalline);
+        this.visualizations.crystalline.visible = false;
+        
         this.switchVisual(this.currentViz);
     }
 
     switchVisual(name) {
         this.currentViz = name;
-        this.updateVisibilityFlags(true, true); 
+        this.updateVisibilityFlags(this.isVisualsVisible, true); 
     }
 
     updateVisibilityFlags(shouldBeVisible, forceUpdate = false) {
@@ -159,66 +116,86 @@ class VisualizerEngine {
         this.isVisualsVisible = shouldBeVisible;
         for(let k in this.visualizations) {
             if(this.visualizations[k]) {
-                this.visualizations[k].visible = shouldBeVisible ? (k === this.currentViz) : false;
+                const targetState = shouldBeVisible ? (k === this.currentViz) : false;
+                this.visualizations[k].visible = targetState;
             }
         }
     }
 
     update(freqData, params) {
-        const time = Date.now() * 0.0005;
-        const cs = this.camState;
+        const t = Date.now() * 0.0001;
+        const cam = this.camera; const cs = this.camState;
         
         if (cs.mode === 'orbit') {
-            this.camera.position.x = Math.sin(cs.theta) * Math.sin(cs.phi) * cs.dist + cs.pan.x;
-            this.camera.position.y = Math.cos(cs.phi) * cs.dist + cs.pan.y;
-            this.camera.position.z = Math.cos(cs.theta) * Math.sin(cs.phi) * cs.dist + cs.pan.z;
-            this.camera.lookAt(cs.pan);
-        }
+            cam.position.x = Math.sin(cs.theta) * Math.sin(cs.phi) * cs.dist + cs.pan.x;
+            cam.position.y = Math.cos(cs.phi) * cs.dist + cs.pan.y;
+            cam.position.z = Math.cos(cs.theta) * Math.sin(cs.phi) * cs.dist + cs.pan.z;
+            cam.lookAt(cs.pan);
+        } else if (cs.mode === 'fly') {
+            cam.position.x = Math.sin(t*cs.speed)*cs.dist;
+            cam.position.y = 20 + Math.cos(t*cs.speed*1.2)*10;
+            cam.position.z = Math.cos(t*cs.speed)*cs.dist;
+            cam.lookAt(0,0,0);
+        } else if (cs.mode === 'fps') {
+            cam.position.x = Math.sin(t*cs.speed)*30; cam.position.y = 5; cam.position.z = Math.cos(t*cs.speed)*30;
+            cam.lookAt(0,10,0);
+        } else { cam.position.set(0, 30, 70); cam.lookAt(0,0,0); }
 
-        if (this.bloomPass) this.bloomPass.strength = params.bloom * 1.5;
+        if (this.bloomPass) this.bloomPass.strength = params.bloom;
 
         const isPlaying = !!freqData;
         this.updateVisibilityFlags(isPlaying, false);
 
         if (isPlaying) {
-            const len = freqData.length;
-            const sensitivity = 2.5;
+            const len = freqData.length; const sensitivity = 2.0;
+            const updateGeo = (obj, fn) => {
+                if(!obj.geometry) return;
+                const pos = obj.geometry.attributes.position; const orig = obj.geometry.userData.orig.array; const arr = pos.array;
+                fn(arr, orig, freqData, sensitivity, len);
+                pos.needsUpdate = true; obj.geometry.computeVertexNormals();
+            };
 
             switch (this.currentViz) {
                 case 'particles': {
-                    const p = this.visualizations.particles;
-                    const c = p.geometry.attributes.color.array;
-                    for(let i=0; i<c.length/3; i++) {
-                        const val = freqData[Math.floor(i/(c.length/3)*len*0.6)]/255;
-                        const col = new THREE.Color().setHSL(0.05 + val*0.1, 1, 0.5);
-                        c[i*3] = col.r * val * params.color;
-                        c[i*3+1] = col.g * val * params.color;
-                        c[i*3+2] = col.b * val * params.color;
+                    const p = this.visualizations.particles; const c = p.geometry.attributes.color.array; const pa = p.geometry.attributes.position.array;
+                    for(let i=0; i<pa.length/3; i++) {
+                        const idx = Math.floor(i/(pa.length/3)*len*0.5); const val = freqData[idx]/255; const col = new THREE.Color().setHSL(idx/(len*0.5), 1, 0.5);
+                        c[i*3] = col.r * val * params.color; c[i*3+1] = col.g * val * params.color; c[i*3+2] = col.b * val * params.color;
                     }
-                    p.geometry.attributes.color.needsUpdate = true;
-                    p.rotation.y += 0.001;
-                    p.material.size = params.size;
+                    p.geometry.attributes.color.needsUpdate = true; p.rotation.y += 0.0005; p.material.size = params.size;
                     break;
                 }
-                case 'star': {
-                    const star = this.visualizations.star;
-                    const pos = star.geometry.attributes.position;
-                    const orig = star.geometry.userData.orig.array;
-                    const colors = star.geometry.attributes.color.array;
-                    const tCol = new THREE.Color();
-                    for(let i=0; i<pos.array.length/3; i++) {
-                        const val = (freqData[i%len]/255) * sensitivity;
-                        const v = new THREE.Vector3(orig[i*3], orig[i*3+1], orig[i*3+2]).normalize().multiplyScalar(18 + (val*12));
-                        pos.array[i*3] = v.x; pos.array[i*3+1] = v.y; pos.array[i*3+2] = v.z;
-                        tCol.setHSL(val > 0.7 ? 0.55 : 0.05 + (val*0.1), 1, 0.4 + val*0.3);
-                        colors[i*3] = tCol.r; colors[i*3+1] = tCol.g; colors[i*3+2] = tCol.b;
-                    }
-                    pos.needsUpdate = true;
-                    star.geometry.attributes.color.needsUpdate = true;
-                    star.rotation.y += 0.005;
+                case 'sphere':
+                    updateGeo(this.visualizations.sphere, (arr, orig, f, s, l) => {
+                        for(let i=0; i<arr.length/3; i++) {
+                            const val = f[i%l]/255 * s * 5; const v = new THREE.Vector3(orig[i*3], orig[i*3+1], orig[i*3+2]).normalize().multiplyScalar(15 + val);
+                            arr[i*3] = v.x; arr[i*3+1] = v.y; arr[i*3+2] = v.z;
+                        }
+                    });
+                    this.visualizations.sphere.rotation.y += 0.002;
                     break;
-                }
-                // (Sphere, Galaxy, EQ etc follow similar update patterns...)
+                case 'terrain':
+                    updateGeo(this.visualizations.terrain, (arr, orig, f, s, l) => {
+                        for(let i=0; i<128; i++) { const val = f[i]/255 * s * 15; for(let j=0; j<128; j++) { const idx = (i*128 + j)*3 + 1; arr[idx] = orig[idx] + val; } }
+                    });
+                    break;
+                case 'galaxy':
+                    const g = this.visualizations.galaxy; const col = g.geometry.attributes.color.array;
+                    for(let i=0; i<col.length/3; i++){
+                        const idx = Math.floor(i/(col.length/3)*len*0.2); const val = freqData[idx]/255; const c = new THREE.Color().setHSL(0.6 + 0.4*val, 1, 0.5 + 0.5*val);
+                        col[i*3] = c.r * params.color; col[i*3+1] = c.g * params.color; col[i*3+2] = c.b * params.color;
+                    }
+                    g.geometry.attributes.color.needsUpdate = true; g.rotation.y += 0.001;
+                    break;
+                case 'parametricEq':
+                    updateGeo(this.visualizations.parametricEq, (arr, orig, f, s, l) => {
+                        for(let i=0; i<=127; i++) { const idx = Math.floor(i/127 * (l*0.4)); const val = f[idx]/255 * s * 20; for(let j=0; j<=63; j++) { const n = (j*128 + i)*3 + 1; arr[n] = orig[n] + val; } }
+                    });
+                    break;
+                case 'crystalline':
+                    this.visualizations.crystalline.children.forEach((c, i) => { const val = freqData[i%len]/255 * sensitivity; c.scale.setScalar(1 + 3*val); c.material.emissiveIntensity = 2*val; });
+                    this.visualizations.crystalline.rotation.y += 0.002;
+                    break;
             }
         }
         this.composer.render();
