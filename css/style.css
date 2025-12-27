@@ -1,10 +1,10 @@
-/* --- PRO HUD THEME --- */
+/* --- PARTIVISION PRO THEME --- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
 
 :root {
   --neon: #00ffff;
   --accent: #ff00ff;
-  --bg-glass: rgba(10, 10, 15, 0.85);
+  --bg-glass: rgba(8, 8, 12, 0.9);
   --border-glass: rgba(255, 255, 255, 0.1);
 }
 
@@ -12,80 +12,58 @@
 body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
 
 #stage-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-.glass-panel { background: var(--bg-glass); backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: 20px; }
+
+.glass-panel { background: var(--bg-glass); backdrop-filter: blur(25px); border: 1px solid var(--border-glass); border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 
 /* Presentation Header */
-#header { 
-  position: absolute; top: 0; left: 0; width: 100%; z-index: 1000; padding: 30px; 
-  display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; 
-}
+#header { position: absolute; top: 0; left: 0; width: 100%; z-index: 1000; padding: 30px 40px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
 #header * { pointer-events: all; }
-.logo h1 { font-size: 22px; letter-spacing: 5px; color: var(--neon); }
-.logo h1 span { color: var(--accent); font-size: 12px; vertical-align: super; }
-.tagline { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
+.logo h1 { font-size: 24px; font-weight: 700; letter-spacing: 6px; color: var(--neon); text-transform: uppercase; }
+.logo h1 span { color: var(--accent); font-size: 14px; vertical-align: super; margin-left: 5px; }
+.tagline { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 3px; margin-top: 5px; }
 
-/* Unified Command Center HUD */
+/* Command Center HUD */
 #command-center {
-  position: absolute; right: 20px; top: 80px; width: 340px; 
-  bottom: 120px; z-index: 1000; padding: 24px;
-  display: flex; flex-direction: column; gap: 24px;
-  overflow-y: auto; scrollbar-width: none;
+  position: absolute; right: 20px; top: 100px; width: 340px; 
+  bottom: 120px; z-index: 1000; padding: 25px;
+  display: flex; flex-direction: column; gap: 25px;
+  overflow-y: auto; scrollbar-width: none; transition: 0.4s cubic-bezier(0.2, 1, 0.3, 1);
 }
 #command-center::-webkit-scrollbar { display: none; }
 
-.panel-section h3 { 
-  font-size: 10px; font-weight: 700; color: #666; letter-spacing: 2px; 
-  margin-bottom: 15px; border-bottom: 1px solid var(--border-glass); 
-  padding-bottom: 5px; text-transform: uppercase; 
-}
+.panel-section h3 { font-size: 10px; font-weight: 700; color: #555; letter-spacing: 2px; margin-bottom: 15px; border-bottom: 1px solid var(--border-glass); padding-bottom: 5px; text-transform: uppercase; }
 
-/* System Console Log */
-#console-logs { 
-  height: 120px; background: rgba(0,0,0,0.5); border-radius: 10px; 
-  padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; 
-  overflow-y: auto; color: #888; border: 1px solid rgba(255,255,255,0.05); 
-}
-.log-entry { margin-bottom: 4px; }
+#console-logs { height: 140px; background: rgba(0,0,0,0.6); border-radius: 10px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 10px; overflow-y: auto; color: #888; border: 1px solid rgba(255,255,255,0.05); line-height: 1.5; }
 .log-time { color: #444; }
 .log-source { color: var(--neon); font-weight: bold; }
 
-.status-bar { display: flex; justify-content: space-between; font-size: 9px; color: #444; margin-top: 5px; }
+.status-bar { display: flex; justify-content: space-between; font-size: 9px; color: #444; margin-top: 8px; font-family: 'JetBrains Mono'; }
 
-.control-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 10px; }
+.control-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 12px; }
 .control-row label { color: #aaa; }
-input[type="range"] { accent-color: var(--neon); width: 150px; }
-select, button { 
-  background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); 
-  color: #fff; padding: 5px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; 
-}
-button:hover { background: rgba(255,255,255,0.1); }
+input[type="range"] { accent-color: var(--neon); width: 160px; height: 4px; border-radius: 2px; }
 
-.macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.macro-btn, .trans-btn { transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); color: #777; }
-.macro-btn.active { border-color: var(--neon); color: var(--neon); background: rgba(0,255,255,0.1); }
+select, button { background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; transition: 0.2s; }
+button:hover { background: rgba(255,255,255,0.1); border-color: var(--neon); }
 
-/* Bottom Transport Control */
-#transport-bar { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: calc(100% - 400px); max-width: 800px; z-index: 1000; }
-.transport-inner { padding: 12px 24px; display: flex; align-items: center; gap: 20px; border-radius: 40px; }
-.scrubber { flex-grow: 1; display: flex; flex-direction: column; }
-#timeDisplay { font-size: 10px; font-family: 'JetBrains Mono'; color: var(--neon); margin-bottom: 4px; }
-#progressBar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; }
-#progressFill { height: 100%; background: var(--neon); width: 0%; border-radius: 2px; }
+.macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.macro-btn, .trans-btn { transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); color: #777; font-weight: bold; }
+.macro-btn.active { border-color: var(--neon); color: var(--neon); background: rgba(0,255,255,0.1); box-shadow: 0 0 10px rgba(0,255,255,0.1); }
 
-.play-btn, .pause-btn { width: 30px; border-radius: 50%; padding: 5px; }
-.rec-btn, .snap-btn { width: 40px; height: 40px; border-radius: 50%; position: relative; }
-.rec-btn::after { content: ''; width: 12px; height: 12px; background: #ff4444; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.rec-btn.active { box-shadow: 0 0 15px rgba(255,0,0,0.4); border-color: #ff4444; }
-.snap-btn::after { content: '📷'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; }
+/* Transport Control */
+#transport-bar { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: calc(100% - 400px); max-width: 900px; z-index: 1000; transition: 0.4s; }
+.transport-inner { padding: 15px 30px; display: flex; align-items: center; gap: 25px; border-radius: 50px; }
 
-/* Global UI Toggle States */
-body.ui-hidden #command-center, body.ui-hidden #header, body.ui-hidden #transport-bar { 
-  opacity: 0; pointer-events: none; transform: translateY(10px); transition: 0.4s; 
-}
+.scrubber { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+#timeDisplay { font-size: 10px; font-family: 'JetBrains Mono'; color: var(--neon); letter-spacing: 1px; }
+#progressBar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative; }
+#progressFill { height: 100%; background: linear-gradient(90deg, var(--neon), var(--accent)); width: 0%; border-radius: 2px; transition: width 0.1s linear; }
 
-#drop-overlay { 
-  position: fixed; inset: 0; background: rgba(0,255,255,0.05); z-index: 2000; 
-  display: flex; align-items: center; justify-content: center; font-size: 24px; 
-  letter-spacing: 10px; color: var(--neon); opacity: 0; pointer-events: none; 
-}
-#drop-overlay.active { opacity: 1; pointer-events: all; }
+.play-btn, .pause-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.play-btn:disabled { opacity: 0.3; }
+
+/* Global State */
+body.ui-hidden #command-center, body.ui-hidden #header, body.ui-hidden #transport-bar { opacity: 0; pointer-events: none; transform: translateY(20px); }
+
+#drop-overlay { position: fixed; inset: 0; background: rgba(0,255,255,0.05); z-index: 2000; display: flex; align-items: center; justify-content: center; font-size: 24px; letter-spacing: 12px; color: var(--neon); opacity: 0; pointer-events: none; transition: 0.3s; font-weight: 700; }
+#drop-overlay.active { opacity: 1; pointer-events: all; backdrop-filter: blur(10px); }
