@@ -14,7 +14,6 @@ class App {
         
         this.macros = {
             sizeLFO: { active: false, speed: 2.0 },
-            colorCycle: { active: false, speed: 1.0 },
             autoOrbit: { active: false, speed: 1.0 },
             warpDrive: { active: false, intensity: 0 }
         };
@@ -28,14 +27,14 @@ class App {
 
     load(file) {
         this.audio.load(URL.createObjectURL(file));
-        this.ui.log("SYSTEM", `Loaded Ingestion: ${file.name}`);
+        this.ui.log("SYSTEM", `Data Ingest: ${file.name}`);
     }
 
     queueTransition(mode, delay) {
-        this.ui.log("QUEUE", `Scheduling ${mode} in ${delay}s...`);
+        this.ui.log("QUEUE", `T-minus ${delay}s to ${mode}`);
         setTimeout(() => {
             this.setVisual(mode);
-            this.ui.log("TRANSITION", `Executed transition to ${mode}`);
+            this.ui.log("PIPELINE", `Switching to ${mode}`);
         }, delay * 1000);
     }
 
