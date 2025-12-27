@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PARTIVISION | Modular Visualizer v2.0</title>
+  <title>PARTIVISION | Modular Visualizer v2.1</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -19,7 +19,7 @@
       <div class="header-actions">
         <button id="helpBtn" title="Keyboard Shortcuts (?)">Help</button>
         <button id="hideUiBtn" title="Toggle Interface (H)">Hide UI</button>
-        <button id="viewSourceBtn">Source</button>
+        <!-- Removed View Source Button -->
       </div>
     </div>
     <div id="controls">
@@ -90,34 +90,26 @@
   <!-- Help Modal -->
   <div id="help-overlay">
       <div class="help-content">
-          <h2>Controls & Hotkeys</h2>
+          <h2>System Controls</h2>
           <div class="shortcut-list">
               <div class="shortcut-item"><span>Space</span> <span>Play / Pause</span></div>
               <div class="shortcut-item"><span>H</span> <span>Toggle UI Visibility</span></div>
+              <div class="shortcut-item"><span>D</span> <span>Toggle Debug Console</span></div>
               <div class="shortcut-item"><span>R</span> <span>Start / Stop Recording</span></div>
               <div class="shortcut-item"><span>S</span> <span>Take Snapshot (PNG)</span></div>
-              <div class="shortcut-item"><span>Esc</span> <span>Show UI / Close Help</span></div>
-              <div class="shortcut-item"><span>?</span> <span>Toggle This Help</span></div>
+              <div class="shortcut-item"><span>Esc</span> <span>Restore UI / Close Panels</span></div>
+              <div class="shortcut-item"><span>?</span> <span>Open Help</span></div>
           </div>
           <button id="closeHelpBtn">Close</button>
       </div>
   </div>
 
-  <!-- Source Code Modal -->
-  <div id="source-code-overlay">
-      <div id="source-code-modal">
-          <div class="source-header">
-              <h3>System Source</h3>
-              <div><button id="copySourceBtn">Copy</button><button id="closeSourceBtn">Close</button></div>
-          </div>
-          <div id="source-code-container"><pre><code id="source-code-content"></code></pre></div>
-      </div>
-  </div>
+  <!-- Removed Source Code Overlay -->
 
   <div id="disclaimer">
       <button id="disclaimer-close">&times;</button>
       <strong>Ready</strong>
-      <p>Drop a file or click help (?) for shortcuts.</p>
+      <p>Drop a file to visualize. Press 'H' to hide the UI for presentation.</p>
   </div>
   
   <!-- Draggable Settings Panels -->
@@ -139,9 +131,9 @@
   <div id="visualizer-params" class="settings-panel" style="right: 240px;">
     <div class="panel-header"><div class="settings-title">Visuals</div></div>
     <div class="panel-content">
-      <div class="settings-slider"><label>Size</label><input type="range" id="particleSize" min="0.1" max="5" step="0.1" value="1"></div>
-      <div class="settings-slider"><label>Color</label><input type="range" id="colorIntensity" min="0" max="2" step="0.1" value="1"></div>
-      <div class="settings-slider"><label>Bloom</label><input type="range" id="bloomStrength" min="0" max="2" step="0.1" value="0.5"></div>
+      <div class="settings-slider"><label>Particle Size</label><input type="range" id="particleSize" min="0.1" max="5" step="0.1" value="1"></div>
+      <div class="settings-slider"><label>Color Intensity</label><input type="range" id="colorIntensity" min="0" max="2" step="0.1" value="1"></div>
+      <div class="settings-slider"><label>Bloom Strength</label><input type="range" id="bloomStrength" min="0" max="2" step="0.1" value="0.5"></div>
       <div class="preset-buttons">
         <button class="preset-btn" data-preset="subtle">Subtle</button>
         <button class="preset-btn" data-preset="intense">Intense</button>
