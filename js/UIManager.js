@@ -1,6 +1,6 @@
 /* =========================================
    UI MANAGER PRO
-   Handles Command Center bindings and Telemetry
+   Handles HUD Ingestion and Command Center
    ========================================= */
 class UIManager {
     constructor(app) {
@@ -18,37 +18,31 @@ class UIManager {
     }
 
     bindEvents() {
-        // Transport
         document.getElementById('playBtn').onclick = () => { this.app.isPlaying = true; this.app.audio.play(); };
         document.getElementById('pauseBtn').onclick = () => { this.app.isPlaying = false; this.app.audio.pause(); };
         
-        // Visual Params
         document.getElementById('visualMode').onchange = (e) => this.app.viz.switchVisual(e.target.value);
         document.getElementById('particleSize').oninput = (e) => this.app.params.size = parseFloat(e.target.value);
         document.getElementById('colorIntensity').oninput = (e) => this.app.params.color = parseFloat(e.target.value);
         document.getElementById('bloomStrength').oninput = (e) => this.app.params.bloom = parseFloat(e.target.value);
         
-        // Performance
         document.getElementById('targetFPS').onchange = (e) => this.app.params.fps = parseInt(e.target.value);
         document.getElementById('bitcrush').oninput = (e) => this.app.viz.setBitcrush(parseInt(e.target.value));
         document.getElementById('fftSize').onchange = (e) => this.app.audio.setFFTSize(parseInt(e.target.value));
 
-        // Macro Bindings
         document.querySelectorAll('.macro-btn').forEach(btn => {
             btn.onclick = () => {
                 const m = btn.dataset.macro;
                 this.app.macros[m].active = !this.app.macros[m].active;
                 btn.classList.toggle('active', this.app.macros[m].active);
-                this.log("MACRO", `${m} logic ${this.app.macros[m].active ? 'ENGAGED' : 'DISENGAGED'}`);
+                this.log("DAEMON", `${m} mode ${this.app.macros[m].active ? 'ENGAGED' : 'IDLE'}`);
             };
         });
 
-        // Transitions
         document.querySelectorAll('.trans-btn').forEach(btn => {
             btn.onclick = () => this.app.queueTransition(btn.dataset.mode, 5);
         });
 
-        // File drop logic
         window.addEventListener('dragover', (e) => { e.preventDefault(); document.getElementById('drop-overlay').classList.add('active'); });
         window.addEventListener('drop', (e) => {
             e.preventDefault();
@@ -58,16 +52,15 @@ class UIManager {
 
         document.getElementById('hideUiBtn').onclick = () => document.body.classList.toggle('ui-hidden');
 
-        // Recording
         document.getElementById('recordBtn').onclick = () => {
             this.app.recorder.isRecording ? this.app.recorder.stop() : this.app.recorder.start();
             document.getElementById('recordBtn').classList.toggle('active', this.app.recorder.isRecording);
-            this.log("RECORDER", this.app.recorder.isRecording ? "Capture Active" : "Finalizing Stream");
+            this.log("PIPELINE", this.app.recorder.isRecording ? "Capture Initialized" : "Buffer Flushed");
         };
 
         document.getElementById('snapshotBtn').onclick = () => {
             this.app.recorder.snapshot();
-            this.log("RECORDER", "Frame snapshot exported");
+            this.log("SYSTEM", "Raw frame dumped");
         };
     }
 
